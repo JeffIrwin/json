@@ -12,11 +12,14 @@
 [![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](http://nlohmann.github.io/json)
 [![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/nlohmann/json/master/LICENSE.MIT)
 [![GitHub Releases](https://img.shields.io/github/release/nlohmann/json.svg)](https://github.com/nlohmann/json/releases)
+[![GitHub Downloads](https://img.shields.io/github/downloads/nlohmann/json/total)](https://github.com/nlohmann/json/releases)
 [![GitHub Issues](https://img.shields.io/github/issues/nlohmann/json.svg)](http://github.com/nlohmann/json/issues)
 [![Average time to resolve an issue](http://isitmaintained.com/badge/resolution/nlohmann/json.svg)](http://isitmaintained.com/project/nlohmann/json "Average time to resolve an issue")
 [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/289/badge)](https://bestpractices.coreinfrastructure.org/projects/289)
+[![GitHub Sponsors](https://img.shields.io/badge/GitHub-Sponsors-ff69b4)](https://github.com/sponsors/nlohmann)
 
 - [Design goals](#design-goals)
+- [Sponsors](#sponsors)
 - [Integration](#integration)
   - [CMake](#cmake)
   - [Package Managers](#package-managers)
@@ -57,6 +60,17 @@ Other aspects were not so important to us:
 - **Speed**. There are certainly [faster JSON libraries](https://github.com/miloyip/nativejson-benchmark#parsing-time) out there. However, if your goal is to speed up your development by adding JSON support with a single header, then this library is the way to go. If you know how to use a `std::vector` or `std::map`, you are already set.
 
 See the [contribution guidelines](https://github.com/nlohmann/json/blob/master/.github/CONTRIBUTING.md#please-dont) for more information.
+
+
+## Sponsors
+
+You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nlohmann).
+
+### :label: Named Sponsors
+
+- [Michael Hartmann](https://github.com/reFX-Mike)
+
+Thanks everyone!
 
 
 ## Integration
@@ -157,11 +171,11 @@ If you are using the [Meson Build System](http://mesonbuild.com), add this sourc
 
 The provided meson.build can also be used as an alternative to cmake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
 
-If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `jsonformoderncpp/x.y.z@vthiery/stable` to your `conanfile.py`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/vthiery/conan-jsonformoderncpp/issues) if you experience problems with the packages.
+If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
 
 If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the [`nlohmann-json` package](https://spack.readthedocs.io/en/latest/package_list.html#nlohmann-json). Please see the [spack project](https://github.com/spack/spack) for any issues regarding the packaging.
 
-If you are using [hunter](https://github.com/ruslo/hunter/) on your project for external dependencies, then you can use the [nlohmann_json package](https://docs.hunter.sh/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
+If you are using [hunter](https://github.com/cpp-pm/hunter) on your project for external dependencies, then you can use the [nlohmann_json package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
 
 If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
 
@@ -175,7 +189,10 @@ If you are using [NuGet](https://www.nuget.org), you can use the package [nlohma
 
 If you are using [conda](https://conda.io/), you can use the package [nlohmann_json](https://github.com/conda-forge/nlohmann_json-feedstock) from [conda-forge](https://conda-forge.org) executing `conda install -c conda-forge nlohmann_json`. Please file issues [here](https://github.com/conda-forge/nlohmann_json-feedstock/issues).
 
-If you are using [MSYS2](http://www.msys2.org/), your can use the [mingw-w64-nlohmann_json](https://packages.msys2.org/base/mingw-w64-nlohmann_json) package, just type `pacman -S mingw-w64-i686-nlohmann_json` or `pacman -S mingw-w64-x86_64-nlohmann_json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann_json%5D) if you experience problems with the packages.
+If you are using [MSYS2](http://www.msys2.org/), your can use the [mingw-w64-nlohmann-json](https://packages.msys2.org/base/mingw-w64-nlohmann-json) package, just type `pacman -S mingw-w64-i686-nlohmann-json` or `pacman -S mingw-w64-x86_64-nlohmann-json` for installation. Please file issues [here](https://github.com/msys2/MINGW-packages/issues/new?title=%5Bnlohmann-json%5D) if you experience problems with the packages.
+
+If you are using [`build2`](https://build2.org), you can use the [`nlohmann-json`](https://cppget.org/nlohmann-json) package from the public repository http://cppget.org or directly from the [package's sources repository](https://github.com/build2-packaging/nlohmann-json). In your project's `manifest` file, just add `depends: nlohmann-json` (probably with some [version constraints](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml#guide-add-remove-deps)). If you are not familiar with using dependencies in `build2`, [please read this introduction](https://build2.org/build2-toolchain/doc/build2-toolchain-intro.xhtml).
+Please file issues [here](https://github.com/build2-packaging/nlohmann-json) if you experience problems with the packages.
 
 ## Examples
 
@@ -283,7 +300,7 @@ auto j2 = R"(
 
 Note that without appending the `_json` suffix, the passed string literal is not parsed, but just used as JSON string value. That is, `json j = "{ \"happy\": true, \"pi\": 3.141 }"` would just store the string `"{ "happy": true, "pi": 3.141 }"` rather than parsing the actual object.
 
-The above example can also be expressed explicitly using [`json::parse()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_afd4ef1ac8ad50a5894a9afebca69140a.html#afd4ef1ac8ad50a5894a9afebca69140a):
+The above example can also be expressed explicitly using [`json::parse()`](https://nlohmann.github.io/json/classnlohmann_1_1basic__json_a265a473e939184aa42655c9ccdf34e58.html#a265a473e939184aa42655c9ccdf34e58):
 
 ```cpp
 // parse explicitly
@@ -450,7 +467,7 @@ j[1] = 42;
 bool foo = j.at(2);
 
 // comparison
-j == "[\"foo\", 1, true]"_json;  // true
+j == "[\"foo\", 42, true]"_json;  // true
 
 // other stuff
 j.size();     // 3 entries
@@ -1062,6 +1079,7 @@ The following compilers are currently used in continuous integration at [Travis]
 | Clang Xcode 10.0      | OSX 10.13.3                  | Apple LLVM version 10.0.0 (clang-1000.11.45.2) |
 | Clang Xcode 10.1      | OSX 10.13.3                  | Apple LLVM version 10.0.0 (clang-1000.11.45.5) |
 | Clang Xcode 10.2      | OSX 10.14.4                  | Apple LLVM version 10.0.1 (clang-1001.0.46.4) |
+| Clang Xcode 11.2.1    | OSX 10.14.4                  | Apple LLVM version 11.0.0 (clang-1100.0.33.12) |
 | Visual Studio 14 2015 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 14.0.25420.1, MSVC 19.0.24215.1 |
 | Visual Studio 15 2017 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 15.9.21+g9802d43bc3, MSVC 19.16.27032.1 |
 | Visual Studio 16 2019 | Windows Server 2012 R2 (x64) | Microsoft (R) Build Engine version 16.3.1+1def00d3d, MSVC 19.23.28106.4 |
