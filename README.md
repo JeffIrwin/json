@@ -69,6 +69,7 @@ You can sponsor this library at [GitHub Sponsors](https://github.com/sponsors/nl
 ### :label: Named Sponsors
 
 - [Michael Hartmann](https://github.com/reFX-Mike)
+- [Stefan Hagen](https://github.com/sthagen)
 
 Thanks everyone!
 
@@ -1383,6 +1384,15 @@ This library will not support comments in the future. If you wish to use comment
 ### Order of object keys
 
 By default, the library does not preserve the **insertion order of object elements**. This is standards-compliant, as the [JSON standard](https://tools.ietf.org/html/rfc8259.html) defines objects as "an unordered collection of zero or more name/value pairs". If you do want to preserve the insertion order, you can specialize the object type with containers like [`tsl::ordered_map`](https://github.com/Tessil/ordered-map) ([integration](https://github.com/nlohmann/json/issues/546#issuecomment-304447518)) or [`nlohmann::fifo_map`](https://github.com/nlohmann/fifo_map) ([integration](https://github.com/nlohmann/json/issues/485#issuecomment-333652309)).
+
+### Memory Release
+
+We checked with Valgrind and the Address Sanitizer (ASAN) that there are no memory leaks. 
+
+If you find that a parsing program with this library does not release memory, please consider the following case and it maybe unrelated to this library. 
+
+**Your program is compiled with glibc.** There is a tunable threshold that glibc uses to decide whether to actually return memory to the system or whether to cache it for later reuse. If in your program you make lots of small allocations and those small allocations are not a contiguous block and are presumably below the threshold, then they will not get returned to the OS.
+Here is a related issue [#1924](https://github.com/nlohmann/json/issues/1924).
 
 ### Further notes
 
