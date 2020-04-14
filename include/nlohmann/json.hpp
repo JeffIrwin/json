@@ -1773,10 +1773,10 @@ class basic_json
     // other constructors and destructor //
     ///////////////////////////////////////
 
-    /// @private
-    basic_json(const detail::json_ref<basic_json>& ref)
-        : basic_json(ref.moved_or_copied())
-    {}
+    template <typename JsonRef,
+              detail::enable_if_t<detail::conjunction<detail::is_json_ref<JsonRef>,
+                                  std::is_same<typename JsonRef::value_type, basic_json>>::value, int> = 0 >
+    basic_json(const JsonRef& ref) : basic_json(ref.moved_or_copied()) {}
 
     /*!
     @brief copy constructor
@@ -5650,17 +5650,17 @@ class basic_json
     Or you can self-defined operator equal function like this:
     @code {.cpp}
     bool my_equal(const_reference lhs, const_reference rhs) {
-	const auto lhs_type lhs.type();
-	const auto rhs_type rhs.type();
-	if (lhs_type == rhs_type) {
-		switch(lhs_type)
-			// self_defined case
-			case value_t::number_float:
-				return std::abs(lhs - rhs) <= std::numeric_limits<float>::epsilon();
-			// other cases remain the same with the original
-			...
-	}
-	...
+    const auto lhs_type lhs.type();
+    const auto rhs_type rhs.type();
+    if (lhs_type == rhs_type) {
+        switch(lhs_type)
+            // self_defined case
+            case value_t::number_float:
+                return std::abs(lhs - rhs) <= std::numeric_limits<float>::epsilon();
+            // other cases remain the same with the original
+            ...
+    }
+    ...
     }
     @endcode
 

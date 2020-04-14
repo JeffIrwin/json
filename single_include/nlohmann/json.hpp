@@ -2794,6 +2794,19 @@ template<typename> struct is_basic_json : std::false_type {};
 NLOHMANN_BASIC_JSON_TPL_DECLARATION
 struct is_basic_json<NLOHMANN_BASIC_JSON_TPL> : std::true_type {};
 
+//////////////////////
+// json_ref helpers //
+//////////////////////
+
+template <typename>
+class json_ref;
+
+template<typename>
+struct is_json_ref : std::false_type {};
+
+template <typename T>
+struct is_json_ref<json_ref<T>> : std::true_type {};
+
 //////////////////////////
 // aliases for detected //
 //////////////////////////
@@ -10719,8 +10732,30 @@ class json_pointer
     */
     static int array_index(const std::string& s)
     {
+        // error condition (cf. RFC 6901, Sect. 4)
+        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and s[0] == '0'))
+        {
+            JSON_THROW(detail::parse_error::create(106, 0,
+                                                   "array index '" + s +
+                                                   "' must not begin with '0'"));
+        }
+
+        // error condition (cf. RFC 6901, Sect. 4)
+        if (JSON_HEDLEY_UNLIKELY(s.size() > 1 and not (s[0] >= '1' and s[0] <= '9')))
+        {
+            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + s + "' is not a number"));
+        }
+
         std::size_t processed_chars = 0;
-        const int res = std::stoi(s, &processed_chars);
+        int res = 0;
+        JSON_TRY
+        {
+            res = std::stoi(s, &processed_chars);
+        }
+        JSON_CATCH(std::out_of_range&)
+        {
+            JSON_THROW(detail::out_of_range::create(404, "unresolved reference token '" + s + "'"));
+        }
 
         // check if the string was completely read
         if (JSON_HEDLEY_UNLIKELY(processed_chars != s.size()))
@@ -10787,14 +10822,7 @@ class json_pointer
                 case detail::value_t::array:
                 {
                     // create an entry in the array
-                    JSON_TRY
-                    {
-                        result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    result = &result->operator[](static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -10864,14 +10892,6 @@ class json_pointer
 
                 case detail::value_t::array:
                 {
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
                     if (reference_token == "-")
                     {
                         // explicitly treat "-" as index beyond the end
@@ -10880,15 +10900,8 @@ class json_pointer
                     else
                     {
                         // convert array index to number; unchecked access
-                        JSON_TRY
-                        {
-                            ptr = &ptr->operator[](
-                                static_cast<size_type>(array_index(reference_token)));
-                        }
-                        JSON_CATCH(std::invalid_argument&)
-                        {
-                            JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                        }
+                        ptr = &ptr->operator[](
+                                  static_cast<size_type>(array_index(reference_token)));
                     }
                     break;
                 }
@@ -10931,23 +10944,8 @@ class json_pointer
                                                                 ") is out of range"));
                     }
 
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
                     // note: at performs range check
-                    JSON_TRY
-                    {
-                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -10996,24 +10994,9 @@ class json_pointer
                                                                 ") is out of range"));
                     }
 
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
                     // use unchecked array access
-                    JSON_TRY
-                    {
-                        ptr = &ptr->operator[](
-                            static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    ptr = &ptr->operator[](
+                              static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -11055,23 +11038,8 @@ class json_pointer
                                                                 ") is out of range"));
                     }
 
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
-                    {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
-                    }
-
                     // note: at performs range check
-                    JSON_TRY
-                    {
-                        ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    ptr = &ptr->at(static_cast<size_type>(array_index(reference_token)));
                     break;
                 }
 
@@ -11114,30 +11082,14 @@ class json_pointer
                         return false;
                     }
 
-                    // error condition (cf. RFC 6901, Sect. 4)
-                    if (JSON_HEDLEY_UNLIKELY(reference_token.size() > 1 and reference_token[0] == '0'))
+                    const auto idx = static_cast<size_type>(array_index(reference_token));
+                    if (idx >= ptr->size())
                     {
-                        JSON_THROW(detail::parse_error::create(106, 0,
-                                                               "array index '" + reference_token +
-                                                               "' must not begin with '0'"));
+                        // index out of range
+                        return false;
                     }
 
-                    JSON_TRY
-                    {
-                        const auto idx = static_cast<size_type>(array_index(reference_token));
-                        if (idx >= ptr->size())
-                        {
-                            // index out of range
-                            return false;
-                        }
-
-                        ptr = &ptr->operator[](idx);
-                        break;
-                    }
-                    JSON_CATCH(std::invalid_argument&)
-                    {
-                        JSON_THROW(detail::parse_error::create(109, 0, "array index '" + reference_token + "' is not a number"));
-                    }
+                    ptr = &ptr->operator[](idx);
                     break;
                 }
 
@@ -12908,7 +12860,7 @@ class binary_writer
     static CharType to_char_type(std::uint8_t x) noexcept
     {
         static_assert(sizeof(std::uint8_t) == sizeof(CharType), "size of CharType must be equal to std::uint8_t");
-        static_assert(std::is_pod<CharType>::value, "CharType must be POD");
+        static_assert(std::is_trivial<CharType>::value, "CharType must be trivial");
         CharType result;
         std::memcpy(&result, &x, sizeof(x));
         return result;
@@ -16632,10 +16584,10 @@ class basic_json
     // other constructors and destructor //
     ///////////////////////////////////////
 
-    /// @private
-    basic_json(const detail::json_ref<basic_json>& ref)
-        : basic_json(ref.moved_or_copied())
-    {}
+    template <typename JsonRef,
+              detail::enable_if_t<detail::conjunction<detail::is_json_ref<JsonRef>,
+                                  std::is_same<typename JsonRef::value_type, basic_json>>::value, int> = 0 >
+    basic_json(const JsonRef& ref) : basic_json(ref.moved_or_copied()) {}
 
     /*!
     @brief copy constructor
@@ -20509,19 +20461,20 @@ class basic_json
     Or you can self-defined operator equal function like this:
     @code {.cpp}
     bool my_equal(const_reference lhs, const_reference rhs) {
-	const auto lhs_type lhs.type();
-	const auto rhs_type rhs.type();
-	if (lhs_type == rhs_type) {
-		switch(lhs_type)
-			// self_defined case
-			case value_t::number_float:
-				return std::abs(lhs - rhs) <= std::numeric_limits<float>::epsilon();
-			// other cases remain the same with the original
-			...
-	}
-	...
+    const auto lhs_type lhs.type();
+    const auto rhs_type rhs.type();
+    if (lhs_type == rhs_type) {
+        switch(lhs_type)
+            // self_defined case
+            case value_t::number_float:
+                return std::abs(lhs - rhs) <= std::numeric_limits<float>::epsilon();
+            // other cases remain the same with the original
+            ...
+    }
+    ...
     }
     @endcode
+
     @note NaN values never compare equal to themselves or to other NaN values.
 
     @param[in] lhs  first JSON value to consider
