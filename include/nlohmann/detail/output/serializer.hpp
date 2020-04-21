@@ -259,8 +259,7 @@ class serializer
                     {
                         dump_integer(*i);
                         o->write_character(',');
-                        int index = i - val.m_value.binary->cbegin();
-                        if (index % 16 == 0)
+                        if (std::distance(val.m_value.binary->cbegin(), i) % 16 == 0)
                         {
                             o->write_character('\n');
                         }
@@ -862,7 +861,7 @@ class serializer
                 : (0xFFu >> type) & (byte);
 
         std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
-        assert(0 <= index and index < 400);
+        assert(index < 400);
         state = utf8d[index];
         return state;
     }

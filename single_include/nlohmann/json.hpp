@@ -14543,7 +14543,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
 
         std::memmove(buf + (static_cast<size_t>(n) + 1), buf + n, static_cast<size_t>(k) - static_cast<size_t>(n));
         buf[n] = '.';
-        return buf + (static_cast<size_t>(k) + 1);
+        return buf + (static_cast<size_t>(k) + 1U);
     }
 
     if (min_exp < n and n <= 0)
@@ -14555,7 +14555,7 @@ inline char* format_buffer(char* buf, int len, int decimal_exponent,
         buf[0] = '0';
         buf[1] = '.';
         std::memset(buf + 2, '0', static_cast<size_t>(-n));
-        return buf + (2 + static_cast<size_t>(-n) + k);
+        return buf + (2U + static_cast<size_t>(-n) + static_cast<size_t>(k));
     }
 
     if (k == 1)
@@ -14892,8 +14892,7 @@ class serializer
                     {
                         dump_integer(*i);
                         o->write_character(',');
-                        int index = i - val.m_value.binary->cbegin();
-                        if (index % 16 == 0)
+                        if (std::distance(val.m_value.binary->cbegin(), i) % 16 == 0)
                         {
                             o->write_character('\n');
                         }
@@ -15495,7 +15494,7 @@ class serializer
                 : (0xFFu >> type) & (byte);
 
         std::size_t index = 256u + static_cast<size_t>(state) * 16u + static_cast<size_t>(type);
-        assert(0 <= index and index < 400);
+        assert(index < 400);
         state = utf8d[index];
         return state;
     }
@@ -16377,9 +16376,9 @@ class basic_json
     struct internal_binary_t : public BinaryType
     {
         using BinaryType::BinaryType;
-        internal_binary_t() : BinaryType() {}
-        internal_binary_t(BinaryType const& bint) : BinaryType(bint) {}
-        internal_binary_t(BinaryType&& bint) : BinaryType(std::move(bint)) {}
+        internal_binary_t() noexcept(noexcept(BinaryType())) : BinaryType() {}
+        internal_binary_t(BinaryType const& bint) noexcept(noexcept(BinaryType(bint))) : BinaryType(bint) {}
+        internal_binary_t(BinaryType&& bint)  noexcept(noexcept(BinaryType(std::move(bint)))) : BinaryType(std::move(bint)) {}
 
         // TOOD: If minimum C++ version is ever bumped to C++17, this field
         // deserves to be a std::optional
@@ -22165,7 +22164,6 @@ class basic_json
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
-        assert(sax);
         return format == input_format_t::json
                ? parser(std::move(i)).sax_parse(sax, strict)
                : detail::binary_reader<basic_json, SAX>(std::move(i)).sax_parse(format, sax, strict);
@@ -23835,7 +23833,7 @@ class basic_json
                     result.push_back(
                     {
                         {"op", "add"},
-                        {"path", path + "/" + std::to_string(i)},
+                        {"path", path + "/-"},
                         {"value", target[i]}
                     });
                     ++i;

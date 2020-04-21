@@ -251,7 +251,7 @@ struct allocator_no_forward : std::allocator<T>
     };
 
     template <class... Args>
-    void construct(T* p, const Args& ... args)
+    void construct(T* p, const Args& ... args) noexcept(noexcept(::new (static_cast<void*>(p)) T(args...)))
     {
         // force copy even if move is available
         ::new (static_cast<void*>(p)) T(args...);
@@ -272,8 +272,8 @@ TEST_CASE("bad my_allocator::construct")
               double,
               allocator_no_forward>;
 
-        bad_alloc_json json;
-        json["test"] = bad_alloc_json::array_t();
-        json["test"].push_back("should not leak");
+        bad_alloc_json j;
+        j["test"] = bad_alloc_json::array_t();
+        j["test"].push_back("should not leak");
     }
 }
