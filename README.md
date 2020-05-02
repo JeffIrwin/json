@@ -133,6 +133,34 @@ add_library(foo ...)
 target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
 ```
 
+##### Embedded (FetchContent)
+
+Since CMake v3.11,
+[FetchContent](https://cmake.org/cmake/help/v3.11/module/FetchContent.html) can
+be used to automatically download the repository as a dependency at configure type.
+
+Example:
+```cmake
+include(FetchContent)
+
+FetchContent_Declare(json
+  GIT_REPOSITORY https://github.com/nlohmann/json
+  GIT_TAG v3.7.3)
+
+FetchContent_GetProperties(json)
+if(NOT json_POPULATED)
+  FetchContent_Populate(json)
+  add_subdirectory(${json_SOURCE_DIR} ${json_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+target_link_libraries(foo PRIVATE nlohmann_json::nlohmann_json)
+```
+
+**Note**: The repository https://github.com/nlohmann/json download size is huge.
+It contains all the dataset used for the benchmarks. You might want to depend on
+a smaller repository. For instance, you might want to replace the URL above by
+https://github.com/ArthurSonzogni/nlohmann_json_cmake_fetchcontent
+
 #### Supporting Both
 
 To allow your project to support either an externally supplied or an embedded JSON library, you can use a pattern akin to the following:
@@ -1045,7 +1073,7 @@ Please note:
 
     The code compiles successfully with [Android NDK](https://developer.android.com/ndk/index.html?hl=ml), Revision 9 - 11 (and possibly later) and [CrystaX's Android NDK](https://www.crystax.net/en/android/ndk) version 10.
 
-- For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
+- For GCC running on MinGW or Android SDK, the error `'to_string' is not a member of 'std'` (or similarly, for `strtod` or `strtof`) may occur. Note this is not an issue with the code,  but rather with the compiler itself. On Android, see above to build with a newer environment.  For MinGW, please refer to [this site](http://tehsausage.com/mingw-to-string) and [this discussion](https://github.com/nlohmann/json/issues/136) for information on how to fix this bug. For Android NDK using `APP_STL := gnustl_static`, please refer to [this discussion](https://github.com/nlohmann/json/issues/219).
 
 - Unsupported versions of GCC and Clang are rejected by `#error` directives. This can be switched off by defining `JSON_SKIP_UNSUPPORTED_COMPILER_CHECK`. Note that you can expect no support in this case.
 
