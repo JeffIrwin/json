@@ -4265,8 +4265,7 @@ class byte_container_with_subtype : public BinaryType
         : container_type(std::move(b))
     {}
 
-    byte_container_with_subtype(const container_type& b,
-                                std::uint8_t subtype) noexcept(noexcept(container_type(b)))
+    byte_container_with_subtype(const container_type& b, std::uint8_t subtype) noexcept(noexcept(container_type(b)))
         : container_type(b)
         , m_subtype(subtype)
         , m_has_subtype(true)
@@ -22493,8 +22492,6 @@ class basic_json
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
-        assert(sax);
-
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia)).sax_parse(sax, strict)
@@ -22507,7 +22504,6 @@ class basic_json
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
     {
-        assert(sax);
         auto ia = i.get();
         return format == input_format_t::json
                ? parser(std::move(ia)).sax_parse(sax, strict)
