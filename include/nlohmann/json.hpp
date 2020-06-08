@@ -4764,7 +4764,7 @@ class basic_json
                 future 4.0.0 of the library. Please use @ref items() instead;
                 that is, replace `json::iterator_wrapper(j)` with `j.items()`.
     */
-    JSON_HEDLEY_DEPRECATED(3.1.0)
+    JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<iterator> iterator_wrapper(reference ref) noexcept
     {
         return ref.items();
@@ -4773,7 +4773,7 @@ class basic_json
     /*!
     @copydoc iterator_wrapper(reference)
     */
-    JSON_HEDLEY_DEPRECATED(3.1.0)
+    JSON_HEDLEY_DEPRECATED_FOR(3.1.0, items())
     static iteration_proxy<const_iterator> iterator_wrapper(const_reference ref) noexcept
     {
         return ref.items();
@@ -6530,7 +6530,7 @@ class basic_json
                 instead; that is, replace calls like `j >> o;` with `o << j;`.
     @since version 1.0.0; deprecated since version 3.0.0
     */
-    JSON_HEDLEY_DEPRECATED(3.0.0)
+    JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator<<(std::ostream&, const basic_json&))
     friend std::ostream& operator>>(const basic_json& j, std::ostream& o)
     {
         return o << j;
@@ -6549,7 +6549,7 @@ class basic_json
     /*!
     @brief deserialize from a compatible input
 
-    This function reads from a compatible input. Examples are:
+    @tparam InputType A compatible input, for instance
     - an std::istream object
     - a FILE pointer
     - a C-style array of characters
@@ -6650,6 +6650,33 @@ class basic_json
         return result;
     }
 
+    /*!
+    @brief check if the input is valid JSON
+
+    Unlike the @ref parse(InputType&&, const parser_callback_t,const bool)
+    function, this function neither throws an exception in case of invalid JSON
+    input (i.e., a parse error) nor creates diagnostic information.
+
+    @tparam InputType A compatible input, for instance
+    - an std::istream object
+    - a FILE pointer
+    - a C-style array of characters
+    - a pointer to a null-terminated string of single byte characters
+    - an object obj for which begin(obj) and end(obj) produces a valid pair of
+      iterators.
+
+    @param[in] i input to read from
+
+    @return Whether the input read from @a i is valid JSON.
+
+    @complexity Linear in the length of the input. The parser is a predictive
+    LL(1) parser.
+
+    @note A UTF-8 byte order mark is silently ignored.
+
+    @liveexample{The example below demonstrates the `accept()` function reading
+    from a string.,accept__string}
+    */
     template<typename InputType>
     static bool accept(InputType&& i)
     {
@@ -6731,8 +6758,8 @@ class basic_json
     }
 
     template <typename SAX>
-    JSON_HEDLEY_NON_NULL(2)
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, sax_parse(ptr, ptr + len, ...))
+    JSON_HEDLEY_NON_NULL(2)
     static bool sax_parse(detail::span_input_adapter&& i, SAX* sax,
                           input_format_t format = input_format_t::json,
                           const bool strict = true)
@@ -6743,9 +6770,6 @@ class basic_json
                : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
     }
 
-
-
-
     /*!
     @brief deserialize from stream
     @deprecated This stream operator is deprecated and will be removed in
@@ -6754,7 +6778,7 @@ class basic_json
                 instead; that is, replace calls like `j << i;` with `i >> j;`.
     @since version 1.0.0; deprecated since version 3.0.0
     */
-    JSON_HEDLEY_DEPRECATED(3.0.0)
+    JSON_HEDLEY_DEPRECATED_FOR(3.0.0, operator>>(std::istream&, basic_json&))
     friend std::istream& operator<<(basic_json& j, std::istream& i)
     {
         return operator>>(i, j);
