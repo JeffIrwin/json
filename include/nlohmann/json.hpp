@@ -2238,7 +2238,8 @@ class basic_json
     @param[in] error_handler  how to react on decoding errors; there are three
     possible values: `strict` (throws and exception in case a decoding error
     occurs; default), `replace` (replace invalid UTF-8 sequences with U+FFFD),
-    and `ignore` (ignore invalid UTF-8 sequences during serialization).
+    and `ignore` (ignore invalid UTF-8 sequences during serialization; all
+    bytes are copied to the output unchanged).
 
     @return string containing the serialization of the JSON value
 
@@ -3016,6 +3017,18 @@ class basic_json
                 JSONSerializer<ValueType>::from_json(std::declval<const basic_json_t&>(), v)))
     {
         JSONSerializer<ValueType>::from_json(*this, v);
+        return v;
+    }
+
+    // specialization to allow to call get_to with a basic_json value
+    // see https://github.com/nlohmann/json/issues/2175
+    template<typename ValueType,
+             detail::enable_if_t <
+                 detail::is_basic_json<ValueType>::value,
+                 int> = 0>
+    ValueType & get_to(ValueType& v) const
+    {
+        v = *this;
         return v;
     }
 
