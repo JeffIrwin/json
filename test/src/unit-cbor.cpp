@@ -2503,6 +2503,8 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         std::vector<uint8_t> expected((std::istreambuf_iterator<char>(f_bin)),
                                       std::istreambuf_iterator<char>());
         CHECK(j == json::binary(expected));
+
+        CHECK(json::to_cbor(json::binary(std::vector<uint8_t> {}, 0x42)) == std::vector<uint8_t> {0xd8, 0x42, 0x40});
     }
 
     SECTION("arrays")
@@ -2546,5 +2548,178 @@ TEST_CASE("examples from RFC 7049 Appendix A")
         CHECK(json::parse("{\"a\": 1, \"b\": [2, 3]}") == json::from_cbor(std::vector<uint8_t>({0xbf, 0x61, 0x61, 0x01, 0x61, 0x62, 0x9f, 0x02, 0x03, 0xff, 0xff})));
         CHECK(json::parse("[\"a\", {\"b\": \"c\"}]") == json::from_cbor(std::vector<uint8_t>({0x82, 0x61, 0x61, 0xbf, 0x61, 0x62, 0x61, 0x63, 0xff})));
         CHECK(json::parse("{\"Fun\": true, \"Amt\": -2}") == json::from_cbor(std::vector<uint8_t>({0xbf, 0x63, 0x46, 0x75, 0x6e, 0xf5, 0x63, 0x41, 0x6d, 0x74, 0x21, 0xff})));
+    }
+}
+
+TEST_CASE("Tagged values")
+{
+    json j = "s";
+    auto v = json::to_cbor(j);
+
+    SECTION("0xC6..0xD4")
+    {
+        for (std::uint8_t b :
+                {
+                    0xC6, 0xC7, 0xC8, 0xC9, 0xCA, 0xCB, 0xCC, 0xCD, 0xCE, 0xCF, 0xD0, 0xD1, 0xD2, 0xD3, 0xD4
+                })
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), b);
+
+            // check that parsing fails in error mode
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+
+            // check that parsing succeeds and gets original value in ignore mode
+            auto j_tagged = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore);
+            CHECK(j_tagged == j);
+        }
+    }
+
+    SECTION("0xD8 - 1 byte follows")
+    {
+        SECTION("success")
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), 0x42); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0xD8); // tag
+
+            // check that parsing fails in error mode
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+
+            // check that parsing succeeds and gets original value in ignore mode
+            auto j_tagged = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore);
+            CHECK(j_tagged == j);
+        }
+
+        SECTION("missing byte after tag")
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), 0xD8); // tag
+
+            // check that parsing fails in all modes
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore), json::parse_error);
+        }
+    }
+
+    SECTION("0xD9 - 2 byte follow")
+    {
+        SECTION("success")
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), 0x42); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x23); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0xD9); // tag
+
+            // check that parsing fails in error mode
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+
+            // check that parsing succeeds and gets original value in ignore mode
+            auto j_tagged = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore);
+            CHECK(j_tagged == j);
+        }
+
+        SECTION("missing byte after tag")
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), 0x23); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0xD9); // tag
+
+            // check that parsing fails in all modes
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore), json::parse_error);
+        }
+    }
+
+    SECTION("0xDA - 4 bytes follow")
+    {
+        SECTION("success")
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), 0x42); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x23); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x22); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x11); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0xDA); // tag
+
+            // check that parsing fails in error mode
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+
+            // check that parsing succeeds and gets original value in ignore mode
+            auto j_tagged = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore);
+            CHECK(j_tagged == j);
+        }
+
+        SECTION("missing bytes after tag")
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), 0x23); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x22); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x11); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0xDA); // tag
+
+            // check that parsing fails in all modes
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore), json::parse_error);
+        }
+    }
+
+    SECTION("0xDB - 8 bytes follow")
+    {
+        SECTION("success")
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), 0x42); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x23); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x22); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x11); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x42); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x23); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x22); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x11); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0xDB); // tag
+
+            // check that parsing fails in error mode
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+
+            // check that parsing succeeds and gets original value in ignore mode
+            auto j_tagged = json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore);
+            CHECK(j_tagged == j);
+        }
+
+        SECTION("missing byte after tag")
+        {
+            // add tag to value
+            auto v_tagged = v;
+            v_tagged.insert(v_tagged.begin(), 0x42); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x23); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x22); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x11); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x23); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x22); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0x11); // 1 byte
+            v_tagged.insert(v_tagged.begin(), 0xDB); // tag
+
+            // check that parsing fails in all modes
+            CHECK_THROWS_AS(json::from_cbor(v_tagged), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::error), json::parse_error);
+            CHECK_THROWS_AS(json::from_cbor(v_tagged, true, true, json::cbor_tag_handler_t::ignore), json::parse_error);
+        }
     }
 }

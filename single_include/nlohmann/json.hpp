@@ -4442,6 +4442,125 @@ class byte_container_with_subtype : public BinaryType
 
 // #include <nlohmann/detail/exceptions.hpp>
 
+// #include <nlohmann/detail/hash.hpp>
+
+
+#include <cstddef> // size_t, uint8_t
+#include <functional> // hash
+
+namespace nlohmann
+{
+namespace detail
+{
+
+// boost::hash_combine
+std::size_t combine(std::size_t seed, std::size_t h) noexcept
+{
+    seed ^= h + 0x9e3779b9 + (seed << 6U) + (seed >> 2U);
+    return seed;
+}
+
+/*!
+@brief hash a JSON value
+
+The hash function tries to rely on std::hash where possible. Furthermore, the
+type of the JSON value is taken into account to have different hash values for
+null, 0, 0U, and false, etc.
+
+@tparam BasicJsonType basic_json specialization
+@param j JSON value to hash
+@return hash value of j
+*/
+template<typename BasicJsonType>
+std::size_t hash(const BasicJsonType& j)
+{
+    using string_t = typename BasicJsonType::string_t;
+    using number_integer_t = typename BasicJsonType::number_integer_t;
+    using number_unsigned_t = typename BasicJsonType::number_unsigned_t;
+    using number_float_t = typename BasicJsonType::number_float_t;
+
+    const auto type = static_cast<std::size_t>(j.type());
+    switch (j.type())
+    {
+        case BasicJsonType::value_t::null:
+        case BasicJsonType::value_t::discarded:
+        {
+            return combine(type, 0);
+        }
+
+        case BasicJsonType::value_t::object:
+        {
+            auto seed = combine(type, j.size());
+            for (const auto& element : j.items())
+            {
+                const auto h = std::hash<string_t> {}(element.key());
+                seed = combine(seed, h);
+                seed = combine(seed, hash(element.value()));
+            }
+            return seed;
+        }
+
+        case BasicJsonType::value_t::array:
+        {
+            auto seed = combine(type, j.size());
+            for (const auto& element : j)
+            {
+                seed = combine(seed, hash(element));
+            }
+            return seed;
+        }
+
+        case BasicJsonType::value_t::string:
+        {
+            const auto h = std::hash<string_t> {}(j.template get_ref<const string_t&>());
+            return combine(type, h);
+        }
+
+        case BasicJsonType::value_t::boolean:
+        {
+            const auto h = std::hash<bool> {}(j.template get<bool>());
+            return combine(type, h);
+        }
+
+        case BasicJsonType::value_t::number_integer:
+        {
+            const auto h = std::hash<number_integer_t> {}(j.template get<number_integer_t>());
+            return combine(type, h);
+        }
+
+        case nlohmann::detail::value_t::number_unsigned:
+        {
+            const auto h = std::hash<number_unsigned_t> {}(j.template get<number_unsigned_t>());
+            return combine(type, h);
+        }
+
+        case nlohmann::detail::value_t::number_float:
+        {
+            const auto h = std::hash<number_float_t> {}(j.template get<number_float_t>());
+            return combine(type, h);
+        }
+
+        case nlohmann::detail::value_t::binary:
+        {
+            auto seed = combine(type, j.get_binary().size());
+            const auto h = std::hash<bool> {}(j.get_binary().has_subtype());
+            seed = combine(seed, h);
+            seed = combine(seed, j.get_binary().subtype());
+            for (const auto byte : j.get_binary())
+            {
+                seed = combine(seed, std::hash<std::uint8_t> {}(byte));
+            }
+            return seed;
+        }
+
+        default: // LCOV_EXCL_LINE
+            JSON_ASSERT(false); // LCOV_EXCL_LINE
+    }
+}
+
+}  // namespace detail
+}  // namespace nlohmann
+
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
 
@@ -4500,7 +4619,7 @@ class file_input_adapter
     using char_type = char;
 
     JSON_HEDLEY_NON_NULL(2)
-    explicit file_input_adapter(std::FILE* f)  noexcept
+    explicit file_input_adapter(std::FILE* f) noexcept
         : m_file(f)
     {}
 
@@ -4554,7 +4673,7 @@ class input_stream_adapter
     input_stream_adapter& operator=(input_stream_adapter&) = delete;
     input_stream_adapter& operator=(input_stream_adapter&& rhs) = delete;
 
-    input_stream_adapter(input_stream_adapter&& rhs) : is(rhs.is), sb(rhs.sb)
+    input_stream_adapter(input_stream_adapter&& rhs) noexcept : is(rhs.is), sb(rhs.sb)
     {
         rhs.is = nullptr;
         rhs.sb = nullptr;
@@ -5180,30 +5299,14 @@ class json_sax_dom_parser
         return true;
     }
 
+    template<class Exception>
     bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const detail::exception& ex)
+                     const Exception& ex)
     {
         errored = true;
         if (allow_exceptions)
         {
-            // determine the proper exception type from the id
-            switch ((ex.id / 100) % 100)
-            {
-                case 1:
-                    JSON_THROW(*dynamic_cast<const detail::parse_error*>(&ex));
-                case 4:
-                    JSON_THROW(*dynamic_cast<const detail::out_of_range*>(&ex));
-                // LCOV_EXCL_START
-                case 2:
-                    JSON_THROW(*dynamic_cast<const detail::invalid_iterator*>(&ex));
-                case 3:
-                    JSON_THROW(*dynamic_cast<const detail::type_error*>(&ex));
-                case 5:
-                    JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
-                default:
-                    JSON_ASSERT(false);
-                    // LCOV_EXCL_STOP
-            }
+            JSON_THROW(ex);
         }
         return false;
     }
@@ -5434,30 +5537,14 @@ class json_sax_dom_callback_parser
         return true;
     }
 
+    template<class Exception>
     bool parse_error(std::size_t /*unused*/, const std::string& /*unused*/,
-                     const detail::exception& ex)
+                     const Exception& ex)
     {
         errored = true;
         if (allow_exceptions)
         {
-            // determine the proper exception type from the id
-            switch ((ex.id / 100) % 100)
-            {
-                case 1:
-                    JSON_THROW(*dynamic_cast<const detail::parse_error*>(&ex));
-                case 4:
-                    JSON_THROW(*dynamic_cast<const detail::out_of_range*>(&ex));
-                // LCOV_EXCL_START
-                case 2:
-                    JSON_THROW(*dynamic_cast<const detail::invalid_iterator*>(&ex));
-                case 3:
-                    JSON_THROW(*dynamic_cast<const detail::type_error*>(&ex));
-                case 5:
-                    JSON_THROW(*dynamic_cast<const detail::other_error*>(&ex));
-                default:
-                    JSON_ASSERT(false);
-                    // LCOV_EXCL_STOP
-            }
+            JSON_THROW(ex);
         }
         return false;
     }
@@ -5802,6 +5889,13 @@ namespace nlohmann
 namespace detail
 {
 
+/// how to treat CBOR tags
+enum class cbor_tag_handler_t
+{
+    error,  ///< throw a parse_error exception in case of a tag
+    ignore   ///< ignore tags
+};
+
 /*!
 @brief determine system byte order
 
@@ -5856,13 +5950,15 @@ class binary_reader
     @param[in] format  the binary format to parse
     @param[in] sax_    a SAX event processor
     @param[in] strict  whether to expect the input to be consumed completed
+    @param[in] tag_handler  how to treat CBOR tags
 
     @return
     */
     JSON_HEDLEY_NON_NULL(3)
     bool sax_parse(const input_format_t format,
                    json_sax_t* sax_,
-                   const bool strict = true)
+                   const bool strict = true,
+                   const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         sax = sax_;
         bool result = false;
@@ -5874,7 +5970,7 @@ class binary_reader
                 break;
 
             case input_format_t::cbor:
-                result = parse_cbor_internal();
+                result = parse_cbor_internal(true, tag_handler);
                 break;
 
             case input_format_t::msgpack:
@@ -6164,10 +6260,12 @@ class binary_reader
     @param[in] get_char  whether a new character should be retrieved from the
                          input (true, default) or whether the last read
                          character should be considered instead
+    @param[in] tag_handler how CBOR tags should be treated
 
     @return whether a valid CBOR value was passed to the SAX parser
     */
-    bool parse_cbor_internal(const bool get_char = true)
+    bool parse_cbor_internal(const bool get_char = true,
+                             cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         switch (get_char ? get() : current)
         {
@@ -6455,6 +6553,73 @@ class binary_reader
 
             case 0xBF: // map (indefinite length)
                 return get_cbor_object(std::size_t(-1));
+
+            case 0xC6: // tagged item
+            case 0xC7:
+            case 0xC8:
+            case 0xC9:
+            case 0xCA:
+            case 0xCB:
+            case 0xCC:
+            case 0xCD:
+            case 0xCE:
+            case 0xCF:
+            case 0xD0:
+            case 0xD1:
+            case 0xD2:
+            case 0xD3:
+            case 0xD4:
+            case 0xD8: // tagged item (1 bytes follow)
+            case 0xD9: // tagged item (2 bytes follow)
+            case 0xDA: // tagged item (4 bytes follow)
+            case 0xDB: // tagged item (8 bytes follow)
+            {
+                switch (tag_handler)
+                {
+                    case cbor_tag_handler_t::error:
+                    {
+                        auto last_token = get_token_string();
+                        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format_t::cbor, "invalid byte: 0x" + last_token, "value")));
+                    }
+
+                    case cbor_tag_handler_t::ignore:
+                    {
+                        switch (current)
+                        {
+                            case 0xD8:
+                            {
+                                std::uint8_t len{};
+                                get_number(input_format_t::cbor, len);
+                                break;
+                            }
+                            case 0xD9:
+                            {
+                                std::uint16_t len{};
+                                get_number(input_format_t::cbor, len);
+                                break;
+                            }
+                            case 0xDA:
+                            {
+                                std::uint32_t len{};
+                                get_number(input_format_t::cbor, len);
+                                break;
+                            }
+                            case 0xDB:
+                            {
+                                std::uint64_t len{};
+                                get_number(input_format_t::cbor, len);
+                                break;
+                            }
+                            default:
+                                break;
+                        }
+                        return parse_cbor_internal(true, tag_handler);
+                    }
+
+                    default:            // LCOV_EXCL_LINE
+                        JSON_ASSERT(false);  // LCOV_EXCL_LINE
+                }
+            }
 
             case 0xF4: // false
                 return sax->boolean(false);
@@ -9626,7 +9791,6 @@ scan_number_done:
             // skip following whitespace
             skip_whitespace();
         }
-        while (current == ' ' || current == '\t' || current == '\n' || current == '\r');
 
         switch (current)
         {
@@ -12631,6 +12795,12 @@ class binary_writer
 
             case value_t::binary:
             {
+                if (j.m_value.binary->has_subtype())
+                {
+                    write_number(static_cast<std::uint8_t>(0xd8));
+                    write_number(j.m_value.binary->subtype());
+                }
+
                 // step 1: write control byte and the binary array size
                 const auto N = j.m_value.binary->size();
                 if (N <= 0x17)
@@ -16217,6 +16387,8 @@ class basic_json
     using json_serializer = JSONSerializer<T, SFINAE>;
     /// how to treat decoding errors
     using error_handler_t = detail::error_handler_t;
+    /// how to treat CBOR tags
+    using cbor_tag_handler_t = detail::cbor_tag_handler_t;
     /// helper type for initializer lists of basic_json values
     using initializer_list_t = std::initializer_list<detail::json_ref<basic_json>>;
 
@@ -23036,7 +23208,7 @@ class basic_json
     vector in CBOR format.,to_cbor}
 
     @sa http://cbor.io
-    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool, const cbor_tag_handler_t) for the
         analogous deserialization
     @sa @ref to_msgpack(const basic_json&) for the related MessagePack format
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
@@ -23424,6 +23596,7 @@ class basic_json
                        (true by default)
     @param[in] allow_exceptions  whether to throw exceptions in case of a
     parse error (optional, true by default)
+    @param[in] tag_handler how to treat CBOR tags (optional, error by default)
 
     @return deserialized JSON value; in case of a parse error and
             @a allow_exceptions set to `false`, the return value will be
@@ -23450,34 +23623,36 @@ class basic_json
     @since version 2.0.9; parameter @a start_index since 2.1.1; changed to
            consume input adapters, removed start_index parameter, and added
            @a strict parameter since 3.0.0; added @a allow_exceptions parameter
-           since 3.2.0
+           since 3.2.0; added @a tag_handler parameter since 3.9.0.
     */
     template<typename InputType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_cbor(InputType&& i,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
     }
 
     /*!
-    @copydoc from_cbor(detail::input_adapter&&, const bool, const bool)
+    @copydoc from_cbor(detail::input_adapter&&, const bool, const bool, const cbor_tag_handler_t)
     */
     template<typename IteratorType>
     JSON_HEDLEY_WARN_UNUSED_RESULT
     static basic_json from_cbor(IteratorType first, IteratorType last,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23486,9 +23661,10 @@ class basic_json
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
     static basic_json from_cbor(const T* ptr, std::size_t len,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
-        return from_cbor(ptr, ptr + len, strict, allow_exceptions);
+        return from_cbor(ptr, ptr + len, strict, tag_handler);
     }
 
 
@@ -23496,12 +23672,13 @@ class basic_json
     JSON_HEDLEY_DEPRECATED_FOR(3.8.0, from_cbor(ptr, ptr + len))
     static basic_json from_cbor(detail::span_input_adapter&& i,
                                 const bool strict = true,
-                                const bool allow_exceptions = true)
+                                const bool allow_exceptions = true,
+                                const cbor_tag_handler_t tag_handler = cbor_tag_handler_t::error)
     {
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -23579,7 +23756,7 @@ class basic_json
 
     @sa http://msgpack.org
     @sa @ref to_msgpack(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool, const cbor_tag_handler_t) for the
         related CBOR format
     @sa @ref from_ubjson(detail::input_adapter&&, const bool, const bool) for
         the related UBJSON format
@@ -23697,7 +23874,7 @@ class basic_json
     @sa http://ubjson.org
     @sa @ref to_ubjson(const basic_json&, const bool, const bool) for the
              analogous serialization
-    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool, const cbor_tag_handler_t) for the
         related CBOR format
     @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
@@ -23812,7 +23989,7 @@ class basic_json
 
     @sa http://bsonspec.org/spec.html
     @sa @ref to_bson(const basic_json&) for the analogous serialization
-    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool) for the
+    @sa @ref from_cbor(detail::input_adapter&&, const bool, const bool, const cbor_tag_handler_t) for the
         related CBOR format
     @sa @ref from_msgpack(detail::input_adapter&&, const bool, const bool) for
         the related MessagePack format
@@ -24686,9 +24863,7 @@ struct hash<nlohmann::json>
     */
     std::size_t operator()(const nlohmann::json& j) const
     {
-        // a naive hashing via the string representation
-        const auto& h = hash<nlohmann::json::string_t>();
-        return h(j.dump());
+        return nlohmann::detail::hash(j);
     }
 };
 
