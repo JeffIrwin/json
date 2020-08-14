@@ -24,8 +24,8 @@ class basic_json;
 
 ## Specializations
 
-- json
-- ordered_json
+- [**json**](../json.md) - default specialization
+- [**ordered_json**](../ordered_json.md) - specialization that maintains the insertion order of object keys
 
 ## Template parameters
 
@@ -49,7 +49,7 @@ Todo
 ## Member types
 
 - [**value_t**](value_t.md) - the JSON type enumeration
-- json_pointer
+- [**json_pointer**](../json_pointer.md) - JSON Pointer implementation
 - json_serializer
 - [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
 - cbor_tag_handler_t
@@ -204,9 +204,9 @@ Access to the JSON value
 
 ### Deserialization
 
-- [**parse**](parse.md) - deserialize from a compatible input
-- [**accept**](accept.md) - check if the input is valid JSON
-- [**sax_parse**](sax_parse.md) - generate SAX events
+- [**parse**](parse.md) (static) - deserialize from a compatible input
+- [**accept**](accept.md) (static) - check if the input is valid JSON
+- [**sax_parse**](sax_parse.md) (static) - generate SAX events
 
 ### JSON Pointer functions
 
@@ -229,14 +229,14 @@ Access to the JSON value
 
 ### Binary formats
 
-- to_cbor - create a CBOR serialization of a given JSON value
-- to_msgpack - create a MessagePack serialization of a given JSON value
-- to_ubjson - create a UBJSON serialization of a given JSON value
-- to_bson - create a BSON serialization of a given JSON value
-- from_cbor - create a JSON value from an input in CBOR format
-- from_msgpack - create a JSON value from an input in MessagePack format
-- from_ubjson - create a JSON value from an input in UBJSON format
-- from_bson - create a JSON value from an input in BSON format
+- [**from_bson**](from_bson.md) (static) - create a JSON value from an input in BSON format
+- [**from_cbor**](from_cbor.md) (static) - create a JSON value from an input in CBOR format
+- [**from_msgpack**](from_msgpack.md) (static) - create a JSON value from an input in MessagePack format
+- [**from_ubjson**](from_ubjson.md) (static) - create a JSON value from an input in UBJSON format
+- [**to_bson**](to_bson.md) (static) - create a BSON serialization of a given JSON value
+- [**to_cbor**](to_cbor.md) (static) - create a CBOR serialization of a given JSON value
+- [**to_msgpack**](to_msgpack.md) (static) - create a MessagePack serialization of a given JSON value
+- [**to_ubjson**](to_ubjson.md) (static) - create a UBJSON serialization of a given JSON value
 
 ## Non-member functions
 
@@ -245,8 +245,8 @@ Access to the JSON value
 
 ## Literals
 
-- operator""_json
-- operator""_json_pointer
+- [**operator""_json**](operator_literal_json.md) - user-defined string literal for JSON values
+- [**operator""_json_pointer**](operator_literal_json_pointer.md) - user-defined string literal for JSON pointers
 
 ## Helper classes
 

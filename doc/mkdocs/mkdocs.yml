@@ -99,6 +99,10 @@ nav:
         - api/basic_json/error_handler_t.md
         - api/basic_json/find.md
         - api/basic_json/flatten.md
+        - api/basic_json/from_bson.md
+        - api/basic_json/from_cbor.md
+        - api/basic_json/from_msgpack.md
+        - api/basic_json/from_ubjson.md
         - api/basic_json/front.md
         - api/basic_json/insert.md
         - api/basic_json/is_array.md
@@ -129,6 +133,8 @@ nav:
         - api/basic_json/operator==.md
         - api/basic_json/operator!=.md
         - api/basic_json/operator+=.md
+        - api/basic_json/operator_literal_json.md
+        - api/basic_json/operator_literal_json_pointer.md
         - api/basic_json/parse.md
         - api/basic_json/parse_event_t.md
         - api/basic_json/parser_callback_t.md
@@ -139,12 +145,20 @@ nav:
         - api/basic_json/sax_parse.md
         - api/basic_json/size.md
         - api/basic_json/string_t.md
+        - api/basic_json/to_bson.md
+        - api/basic_json/to_cbor.md
+        - api/basic_json/to_msgpack.md
+        - api/basic_json/to_ubjson.md
         - api/basic_json/type.md
         - api/basic_json/type_name.md
         - api/basic_json/unflatten.md
         - api/basic_json/update.md
         - api/basic_json/value.md
         - api/basic_json/value_t.md
+      - api/json.md
+      - api/json_pointer.md
+      - api/ordered_map.md
+      - api/ordered_json.md
 
 # Extras
 extra:
