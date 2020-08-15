@@ -52,19 +52,19 @@ Todo
 - [**json_pointer**](../json_pointer.md) - JSON Pointer implementation
 - json_serializer
 - [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
-- cbor_tag_handler_t
+- [**cbor_tag_handler_t**](cbor_tag_handler_t.md) - type to choose how to handle CBOR tags
 - initializer_list_t
-- input_format_t
+- [**input_format_t**](input_format_t.md) - type to choose the format to parse
 - json_sax_t
 
 ### Exceptions
 
-- exception
-- parse_error
-- invalid_iterator
-- type_error
-- out_of_range
-- other_error
+- [**exception**](exception.md) - general exception of the `basic_json` class
+    - [**parse_error**](parse_error.md) - exception indicating a parse error
+    - [**invalid_iterator**](invalid_iterator.md) - exception indicating errors with iterators
+    - [**type_error**](type_error.md) - exception indicating executing a member function with a wrong type
+    - [**out_of_range**](out_of_range.md) - exception indicating access out of the defined range
+    - [**other_error**](other_error.md) - exception indicating other library errors
 
 ### Container types
 
@@ -135,7 +135,7 @@ Functions to inspect the type of a JSON value.
 
 Direct access to the stored value of a JSON value.
 
-- get - get a value
+- [**get**](get.md) - get a value
 - get_to - get a value
 - get_ptr - get a pointer value
 - get_ref - get a reference value
@@ -225,7 +225,7 @@ Access to the JSON value
 ## Static functions
 
 - [**meta**](meta.md) - returns version information on the library
-- get_allocator - returns the allocator associated with the container
+- [**get_allocator**](get_allocator.md) - returns the allocator associated with the container
 
 ### Binary formats
 

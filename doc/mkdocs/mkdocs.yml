@@ -83,6 +83,7 @@ nav:
         - api/basic_json/binary.md
         - api/basic_json/boolean_t.md
         - api/basic_json/cbegin.md
+        - api/basic_json/cbor_tag_handler_t.md
         - api/basic_json/cend.md
         - api/basic_json/clear.md
         - api/basic_json/contains.md
@@ -97,6 +98,7 @@ nav:
         - api/basic_json/end.md
         - api/basic_json/erase.md
         - api/basic_json/error_handler_t.md
+        - api/basic_json/exception.md
         - api/basic_json/find.md
         - api/basic_json/flatten.md
         - api/basic_json/from_bson.md
@@ -104,7 +106,11 @@ nav:
         - api/basic_json/from_msgpack.md
         - api/basic_json/from_ubjson.md
         - api/basic_json/front.md
+        - api/basic_json/get.md
+        - api/basic_json/get_allocator.md
+        - api/basic_json/input_format_t.md
         - api/basic_json/insert.md
+        - api/basic_json/invalid_iterator.md
         - api/basic_json/is_array.md
         - api/basic_json/is_binary.md
         - api/basic_json/is_boolean.md
@@ -135,7 +141,10 @@ nav:
         - api/basic_json/operator+=.md
         - api/basic_json/operator_literal_json.md
         - api/basic_json/operator_literal_json_pointer.md
+        - api/basic_json/out_of_range.md
+        - api/basic_json/other_error.md
         - api/basic_json/parse.md
+        - api/basic_json/parse_error.md
         - api/basic_json/parse_event_t.md
         - api/basic_json/parser_callback_t.md
         - api/basic_json/patch.md
@@ -150,6 +159,7 @@ nav:
         - api/basic_json/to_msgpack.md
         - api/basic_json/to_ubjson.md
         - api/basic_json/type.md
+        - api/basic_json/type_error.md
         - api/basic_json/type_name.md
         - api/basic_json/unflatten.md
         - api/basic_json/update.md
