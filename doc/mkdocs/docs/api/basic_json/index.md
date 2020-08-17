@@ -1,9 +1,5 @@
 # basic_json
 
-!!! note
-    
-    This page is under construction.
-
 Defined in header `<json.hpp>`
 
 ```cpp
@@ -33,14 +29,14 @@ class basic_json;
 | -------------------- | ----------- | ------------ |
 | `ObjectType`         | type for JSON objects | [`object_t`](object_t.md) |
 | `ArrayType`          | type for JSON arrays | [`array_t`](array_t.md) |
-| `StringType`         | type for JSON strings and object keys | `string_t` |
-| `BooleanType`        | type for JSON booleans | `boolean_t` |
+| `StringType`         | type for JSON strings and object keys | [`string_t`](string_t.md) |
+| `BooleanType`        | type for JSON booleans | [`boolean_t`](boolean_t.md) |
 | `NumberIntegerType`  | type for JSON integer numbers | [`number_integer_t`](number_integer_t.md) |
 | `NumberUnsignedType` | type for JSON unsigned integer numbers | [`number_unsigned_t`](number_unsigned_t.md) |
 | `NumberFloatType`    | type for JSON floating-point numbers | [`number_float_t`](number_float_t.md) |
 | `AllocatorType`      | type of the allocator to use | |
-| `JSONSerializer`     | the serializer to resolve internal calls to `to_json()` and `from_json()` | |
-| `BinaryType`         | type for binary arrays | `binary_t` |
+| `JSONSerializer`     | the serializer to resolve internal calls to `to_json()` and `from_json()` | [`json_serializer`](json_serializer.md) |
+| `BinaryType`         | type for binary arrays | [`binary_t`](binary_t.md) |
 
 ## Iterator invalidation
 
@@ -48,9 +44,10 @@ Todo
 
 ## Member types
 
+- [**adl_serializer**](../adl_serializer.md) - the default serializer
 - [**value_t**](value_t.md) - the JSON type enumeration
 - [**json_pointer**](../json_pointer.md) - JSON Pointer implementation
-- json_serializer
+- [**json_serializer**](json_serializer.md) - type of the serializer to for conversions from/to JSON
 - [**error_handler_t**](error_handler_t.md) - type to choose behavior on decoding errors
 - [**cbor_tag_handler_t**](cbor_tag_handler_t.md) - type to choose how to handle CBOR tags
 - initializer_list_t
@@ -80,9 +77,9 @@ Todo
 | `const_pointer`          | `#!cpp std::allocator_traits<allocator_type>::const_pointer` |
 | `iterator`               | [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
 | `const_iterator`         | constant [LegacyBidirectionalIterator](https://en.cppreference.com/w/cpp/named_req/BidirectionalIterator) |
-| `reverse_iterator`       |  |
-| `const_reverse_iterator` |  |
-| `iteration_proxy`        |  |
+| `reverse_iterator`       | reverse iterator, derived from `iterator` |
+| `const_reverse_iterator` | reverse iterator, derived from `const_iterator` |
+| `iteration_proxy`        | helper type for [`items`](items.md) function |
 
 ### JSON value data types
 
@@ -136,7 +133,7 @@ Functions to inspect the type of a JSON value.
 Direct access to the stored value of a JSON value.
 
 - [**get**](get.md) - get a value
-- get_to - get a value
+- [**get_to**](get_to.md) - get a value and write it to a destination
 - [**get_ptr**](get_ptr.md) - get a pointer value
 - [**get_ref**](get_ref.md) - get a reference value
 - [**operator ValueType**](operator_ValueType.md) - get a value
@@ -190,19 +187,19 @@ Access to the JSON value
 
 ### Lexicographical comparison operators
 
-- [**operator==**](operator==.md) - comparison: equal
-- [**operator!=**](operator!=.md) - comparison: not equal
-- operator< - comparison: less than
-- operator<= - comparison: less than or equal
-- operator> - comparison: greater than
-- operator>= - comparison: greater than or equal
+- [**operator==**](operator_eq.md) - comparison: equal
+- [**operator!=**](operator_ne.md) - comparison: not equal
+- [**operator<**](operator_lt.md) - comparison: less than
+- [**operator<=**](operator_le.md) - comparison: less than or equal
+- [**operator>**](operator_gt.md) - comparison: greater than
+- [**operator>=**](operator_ge.md) - comparison: greater than or equal
 
-### Serialization
+### Serialization / Dumping
 
 - [**dump**](dump.md) - serialization
 - to_string - user-defined to_string function for JSON values
 
-### Deserialization
+### Deserialization / Parsing
 
 - [**parse**](parse.md) (static) - deserialize from a compatible input
 - [**accept**](accept.md) (static) - check if the input is valid JSON
