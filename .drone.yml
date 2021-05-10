@@ -12,11 +12,11 @@ steps:
   - tar xfz cmake-3.20.2.tar.gz
   - cd cmake-3.20.2
   - ./configure
-  - make cmake -j10
+  - make cmake ctest -j10
   - cd ..
   - mkdir build
   - cd build
-  - ../cmake-3.20.2/bin/cmake ..
+  - ../cmake-3.20.2/bin/cmake .. -DJSON_FastTests=ON
   - make -j10
   - cd test
-  - ctest -j10
+  - ../../cmake-3.20.2/bin/ctest -j10
