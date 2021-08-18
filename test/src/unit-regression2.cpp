@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -52,6 +52,10 @@ using nlohmann::json;
 #ifdef JSON_HAS_CPP_20
     #include <span>
 #endif
+
+// NLOHMANN_JSON_SERIALIZE_ENUM uses a static std::pair
+DOCTEST_CLANG_SUPPRESS_WARNING_PUSH
+DOCTEST_CLANG_SUPPRESS_WARNING("-Wexit-time-destructors")
 
 /////////////////////////////////////////////////////////////////////
 // for #1021
@@ -656,3 +660,5 @@ TEST_CASE("regression tests 2")
         static_assert(std::is_copy_assignable<nlohmann::ordered_json>::value, "");
     }
 }
+
+DOCTEST_CLANG_SUPPRESS_WARNING_POP

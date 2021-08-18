@@ -1,7 +1,7 @@
 /*
     __ _____ _____ _____
  __|  |   __|     |   | |  JSON for Modern C++ (test suite)
-|  |  |__   |  |  | | | |  version 3.9.1
+|  |  |__   |  |  | | | |  version 3.10.0
 |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 
 Licensed under the MIT License <http://opensource.org/licenses/MIT>.
@@ -28,6 +28,10 @@ SOFTWARE.
 */
 
 #include "doctest_compatibility.h"
+
+// disable -Wnoexcept as exceptions are switched off for this test suite
+DOCTEST_GCC_SUPPRESS_WARNING_PUSH
+DOCTEST_GCC_SUPPRESS_WARNING("-Wnoexcept")
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
@@ -64,3 +68,5 @@ TEST_CASE("Tests with disabled exceptions")
         delete sax_no_exception::error_string; // NOLINT(cppcoreguidelines-owning-memory)
     }
 }
+
+DOCTEST_GCC_SUPPRESS_WARNING_POP
