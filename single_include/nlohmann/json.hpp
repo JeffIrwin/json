@@ -5875,7 +5875,7 @@ auto input_adapter(T (&array)[N]) -> decltype(input_adapter(array, array + N)) /
 }
 
 // This class only handles inputs of input_buffer_adapter type.
-// It's required so that expressions like {ptr, len} can be implicitely casted
+// It's required so that expressions like {ptr, len} can be implicitly casted
 // to the correct adapter.
 class span_input_adapter
 {
@@ -8430,7 +8430,7 @@ enum class cbor_tag_handler_t
 
 @note from https://stackoverflow.com/a/1001328/266378
 */
-static inline bool little_endianess(int num = 1) noexcept
+static inline bool little_endianness(int num = 1) noexcept
 {
     return *reinterpret_cast<char*>(&num) == 1;
 }
@@ -10729,7 +10729,7 @@ class binary_reader
 
     @return whether conversion completed
 
-    @note This function needs to respect the system's endianess, because
+    @note This function needs to respect the system's endianness, because
           bytes in CBOR, MessagePack, and UBJSON are stored in network order
           (big endian) and therefore need reordering on little endian systems.
     */
@@ -10902,8 +10902,8 @@ class binary_reader
     /// the number of characters read
     std::size_t chars_read = 0;
 
-    /// whether we can assume little endianess
-    const bool is_little_endian = little_endianess();
+    /// whether we can assume little endianness
+    const bool is_little_endian = little_endianness();
 
     /// the SAX parser
     json_sax_t* sax = nullptr;
@@ -15202,7 +15202,7 @@ class binary_writer
     @tparam OutputIsLittleEndian Set to true if output data is
                                  required to be little endian
 
-    @note This function needs to respect the system's endianess, because bytes
+    @note This function needs to respect the system's endianness, because bytes
           in CBOR, MessagePack, and UBJSON are stored in network order (big
           endian) and therefore need reordering on little endian systems.
     */
@@ -15292,8 +15292,8 @@ class binary_writer
     }
 
   private:
-    /// whether we can assume little endianess
-    const bool is_little_endian = little_endianess();
+    /// whether we can assume little endianness
+    const bool is_little_endian = little_endianness();
 
     /// the output
     output_adapter_t<CharType> oa = nullptr;
@@ -17494,16 +17494,55 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
 
     iterator erase(iterator pos)
     {
-        auto it = pos;
+        return erase(pos, std::next(pos));
+    }
 
-        // Since we cannot move const Keys, re-construct them in place
-        for (auto next = it; ++next != this->end(); ++it)
+    iterator erase(iterator first, iterator last)
+    {
+        const auto elements_affected = std::distance(first, last);
+        const auto offset = std::distance(Container::begin(), first);
+
+        // This is the start situation. We need to delete elements_affected
+        // elements (3 in this example: e, f, g), and need to return an
+        // iterator past the last deleted element (h in this example).
+        // Note that offset is the distance from the start of the vector
+        // to first. We will need this later.
+
+        // [ a, b, c, d, e, f, g, h, i, j ]
+        //               ^        ^
+        //             first    last
+
+        // Since we cannot move const Keys, we re-construct them in place.
+        // We start at first and re-construct (viz. copy) the elements from
+        // the back of the vector. Example for first iteration:
+
+        //               ,--------.
+        //               v        |   destroy e and re-construct with h
+        // [ a, b, c, d, e, f, g, h, i, j ]
+        //               ^        ^
+        //               it       it + elements_affected
+
+        for (auto it = first; std::next(it, elements_affected) != Container::end(); ++it)
         {
-            it->~value_type(); // Destroy but keep allocation
-            new (&*it) value_type{std::move(*next)};
+            it->~value_type(); // destroy but keep allocation
+            new (&*it) value_type{std::move(*std::next(it, elements_affected))}; // "move" next element to it
         }
-        Container::pop_back();
-        return pos;
+
+        // [ a, b, c, d, h, i, j, h, i, j ]
+        //               ^        ^
+        //             first    last
+
+        // remove the unneeded elements at the end of the vector
+        Container::resize(this->size() - static_cast<size_type>(elements_affected));
+
+        // [ a, b, c, d, h, i, j ]
+        //               ^        ^
+        //             first    last
+
+        // first is now pointing past the last deleted element, but we cannot
+        // use this iterator, because it may have been invalidated by the
+        // resize call. Instead, we can return begin() + offset.
+        return Container::begin() + offset;
     }
 
     size_type count(const Key& key) const
@@ -18409,7 +18448,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
        - If a subtype is given and the binary array contains exactly 1, 2, 4, 8,
          or 16 elements, the fixext family (fixext1, fixext2, fixext4, fixext8)
          is used. For other sizes, the ext family (ext8, ext16, ext32) is used.
-         The subtype is then added as singed 8-bit integer.
+         The subtype is then added as signed 8-bit integer.
        - If no subtype is given, the bin family (bin8, bin16, bin32) is used.
     - BSON
        - If a subtype is given, it is used and added as unsigned 8-bit integer.
@@ -22522,7 +22561,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
           `key()` returns an empty string.
 
     @warning Using `items()` on temporary objects is dangerous. Make sure the
-             object's lifetime exeeds the iteration. See
+             object's lifetime exceeds the iteration. See
              <https://github.com/nlohmann/json/issues/2040> for more
              information.
 
