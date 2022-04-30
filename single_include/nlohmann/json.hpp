@@ -2411,6 +2411,12 @@ using is_detected_convertible =
     #endif
 #endif
 
+#if JSON_HEDLEY_HAS_ATTRIBUTE(no_unique_address)
+    #define JSON_NO_UNIQUE_ADDRESS [[no_unique_address]]
+#else
+    #define JSON_NO_UNIQUE_ADDRESS
+#endif
+
 // disable documentation warnings on clang
 #if defined(__clang__)
     #pragma clang diagnostic push
@@ -3183,11 +3189,6 @@ struct is_basic_json_context :
     || std::is_same<BasicJsonContext, std::nullptr_t>::value >
 {};
 
-template<typename> struct is_json_pointer : std::false_type {};
-
-template<typename RefStringType>
-struct is_json_pointer<json_pointer<RefStringType>> : std::true_type {};
-
 //////////////////////
 // json_ref helpers //
 //////////////////////
@@ -3289,6 +3290,24 @@ struct has_to_json < BasicJsonType, T, enable_if_t < !is_basic_json<T>::value >>
         T>::value;
 };
 
+template<typename T>
+using detect_key_compare = typename T::key_compare;
+
+template<typename T>
+struct has_key_compare : std::integral_constant<bool, is_detected<detect_key_compare, T>::value> {};
+
+// obtains the actual object key comparator
+template<typename BasicJsonType>
+struct actual_object_comparator
+{
+    using object_t = typename BasicJsonType::object_t;
+    using object_comparator_t = typename BasicJsonType::default_object_comparator_t;
+    using type = typename std::conditional < has_key_compare<object_t>::value,
+          typename object_t::key_compare, object_comparator_t>::type;
+};
+
+template<typename BasicJsonType>
+using actual_object_comparator_t = typename actual_object_comparator<BasicJsonType>::type;
 
 ///////////////////
 // is_ functions //
@@ -3582,6 +3601,78 @@ struct is_constructible_tuple : std::false_type {};
 
 template<typename T1, typename... Args>
 struct is_constructible_tuple<T1, std::tuple<Args...>> : conjunction<is_constructible<T1, Args>...> {};
+
+template<typename BasicJsonType, typename T>
+struct is_json_iterator_of : std::false_type {};
+
+template<typename BasicJsonType>
+struct is_json_iterator_of<BasicJsonType, typename BasicJsonType::iterator> : std::true_type {};
+
+template<typename BasicJsonType>
+struct is_json_iterator_of<BasicJsonType, typename BasicJsonType::const_iterator> : std::true_type
+{};
+
+// checks if a given type T is a template specialization of Primary
+template<template <typename...> class Primary, typename T>
+struct is_specialization_of : std::false_type {};
+
+template<template <typename...> class Primary, typename... Args>
+struct is_specialization_of<Primary, Primary<Args...>> : std::true_type {};
+
+template<typename T>
+using is_json_pointer = is_specialization_of<::nlohmann::json_pointer, uncvref_t<T>>;
+
+// checks if A and B are comparable using Compare functor
+template<typename Compare, typename A, typename B, typename = void>
+struct is_comparable : std::false_type {};
+
+template<typename Compare, typename A, typename B>
+struct is_comparable<Compare, A, B, void_t<
+decltype(std::declval<Compare>()(std::declval<A>(), std::declval<B>())),
+decltype(std::declval<Compare>()(std::declval<B>(), std::declval<A>()))
+>> : std::true_type {};
+
+// checks if BasicJsonType::object_t::key_type and KeyType are comparable using Compare functor
+template<typename BasicJsonType, typename KeyType>
+using is_key_type_comparable = typename is_comparable <
+                               typename BasicJsonType::object_comparator_t,
+                               const key_type_t<typename BasicJsonType::object_t>&,
+                               KeyType >::type;
+
+template<typename T>
+using detect_is_transparent = typename T::is_transparent;
+
+// type trait to check if KeyType can be used as object key
+// true if:
+//   - KeyType is comparable with BasicJsonType::object_t::key_type
+//   - if ExcludeObjectKeyType is true, KeyType is not BasicJsonType::object_t::key_type
+//   - the comparator is transparent or RequireTransparentComparator is false
+//   - KeyType is not a JSON iterator or json_pointer
+template<typename BasicJsonType, typename KeyTypeCVRef, bool RequireTransparentComparator = true,
+         bool ExcludeObjectKeyType = RequireTransparentComparator, typename KeyType = uncvref_t<KeyTypeCVRef>>
+using is_usable_as_key_type = typename std::conditional <
+                              is_key_type_comparable<BasicJsonType, KeyTypeCVRef>::value
+                              && !(ExcludeObjectKeyType && std::is_same<KeyType,
+                                   typename BasicJsonType::object_t::key_type>::value)
+                              && (!RequireTransparentComparator || is_detected <
+                                  detect_is_transparent,
+                                  typename BasicJsonType::object_comparator_t >::value)
+                              && !is_json_iterator_of<BasicJsonType, KeyType>::value
+                              && !is_json_pointer<KeyType>::value,
+                              std::true_type,
+                              std::false_type >::type;
+
+template<typename ObjectType, typename KeyType>
+using detect_erase_with_key_type = decltype(std::declval<ObjectType&>().erase(std::declval<KeyType>()));
+
+// type trait to check if object_t has an erase() member functions accepting KeyType
+template<typename BasicJsonType, typename KeyType>
+using has_erase_with_key_type = typename std::conditional <
+                                is_detected <
+                                detect_erase_with_key_type,
+                                typename BasicJsonType::object_t, KeyType >::value,
+                                std::true_type,
+                                std::false_type >::type;
 
 // a naive helper to check if a type is an ordered_map (exploits the fact that
 // ordered_map inherits capacity() from std::vector)
@@ -5402,6 +5493,7 @@ std::size_t hash(const BasicJsonType& j)
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 #include <vector> // vector
+#include <map> // map
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -5433,7 +5525,7 @@ namespace nlohmann
 namespace detail
 {
 /// the supported input formats
-enum class input_format_t { json, cbor, msgpack, ubjson, bson };
+enum class input_format_t { json, cbor, msgpack, ubjson, bson, bjdata };
 
 ////////////////////
 // input adapters //
@@ -8450,7 +8542,7 @@ class binary_reader
 
     @param[in] adapter  input adapter to read from
     */
-    explicit binary_reader(InputAdapterType&& adapter) noexcept : ia(std::move(adapter))
+    explicit binary_reader(InputAdapterType&& adapter, const input_format_t format = input_format_t::json) noexcept : ia(std::move(adapter)), input_format(format)
     {
         (void)detail::is_sax_static_asserts<SAX, BasicJsonType> {};
     }
@@ -8494,6 +8586,7 @@ class binary_reader
                 break;
 
             case input_format_t::ubjson:
+            case input_format_t::bjdata:
                 result = parse_ubjson_internal();
                 break;
 
@@ -8505,7 +8598,7 @@ class binary_reader
         // strict mode: next byte must be EOF
         if (result && strict)
         {
-            if (format == input_format_t::ubjson)
+            if (input_format == input_format_t::ubjson || input_format == input_format_t::bjdata)
             {
                 get_ignore_noop();
             }
@@ -8517,7 +8610,7 @@ class binary_reader
             if (JSON_HEDLEY_UNLIKELY(current != std::char_traits<char_type>::eof()))
             {
                 return sax->parse_error(chars_read, get_token_string(), parse_error::create(110, chars_read,
-                                        exception_message(format, concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
+                                        exception_message(input_format, concat("expected end of input; last byte: 0x", get_token_string()), "value"), nullptr));
             }
         }
 
@@ -10220,7 +10313,7 @@ class binary_reader
             get();  // TODO(niels): may we ignore N here?
         }
 
-        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "value")))
+        if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "value")))
         {
             return false;
         }
@@ -10230,52 +10323,154 @@ class binary_reader
             case 'U':
             {
                 std::uint8_t len{};
-                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result);
             }
 
             case 'i':
             {
                 std::int8_t len{};
-                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result);
             }
 
             case 'I':
             {
                 std::int16_t len{};
-                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result);
             }
 
             case 'l':
             {
                 std::int32_t len{};
-                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result);
             }
 
             case 'L':
             {
                 std::int64_t len{};
-                return get_number(input_format_t::ubjson, len) && get_string(input_format_t::ubjson, len, result);
+                return get_number(input_format, len) && get_string(input_format, len, result);
+            }
+
+            case 'u':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint16_t len{};
+                return get_number(input_format, len) && get_string(input_format, len, result);
+            }
+
+            case 'm':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint32_t len{};
+                return get_number(input_format, len) && get_string(input_format, len, result);
+            }
+
+            case 'M':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint64_t len{};
+                return get_number(input_format, len) && get_string(input_format, len, result);
             }
 
             default:
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format_t::ubjson, concat("expected length type specification (U, i, I, l, L); last byte: 0x", last_token), "string"), nullptr));
+                break;
         }
+        auto last_token = get_token_string();
+        std::string message;
+
+        if (input_format != input_format_t::bjdata)
+        {
+            message = "expected length type specification (U, i, I, l, L); last byte: 0x" + last_token;
+        }
+        else
+        {
+            message = "expected length type specification (U, i, u, I, m, l, M, L); last byte: 0x" + last_token;
+        }
+        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "string"), nullptr));
+    }
+
+    /*!
+    @param[out] dim  an integer vector storing the ND array dimensions
+    @return whether reading ND array size vector is successful
+    */
+    bool get_ubjson_ndarray_size(std::vector<size_t>& dim)
+    {
+        std::pair<std::size_t, char_int_type> size_and_type;
+        size_t dimlen = 0;
+
+        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
+        {
+            return false;
+        }
+
+        if (size_and_type.first != string_t::npos)
+        {
+            if (size_and_type.second != 0)
+            {
+                if (size_and_type.second != 'N')
+                {
+                    for (std::size_t i = 0; i < size_and_type.first; ++i)
+                    {
+                        if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, size_and_type.second)))
+                        {
+                            return false;
+                        }
+                        dim.push_back(dimlen);
+                    }
+                }
+            }
+            else
+            {
+                for (std::size_t i = 0; i < size_and_type.first; ++i)
+                {
+                    if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen)))
+                    {
+                        return false;
+                    }
+                    dim.push_back(dimlen);
+                }
+            }
+        }
+        else
+        {
+            while (current != ']')
+            {
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_value(dimlen, current)))
+                {
+                    return false;
+                }
+                dim.push_back(dimlen);
+                get_ignore_noop();
+            }
+        }
+        return true;
     }
 
     /*!
     @param[out] result  determined size
     @return whether size determination completed
     */
-    bool get_ubjson_size_value(std::size_t& result)
+    bool get_ubjson_size_value(std::size_t& result, char_int_type prefix = 0)
     {
-        switch (get_ignore_noop())
+        if (prefix == 0)
+        {
+            prefix = get_ignore_noop();
+        }
+
+        switch (prefix)
         {
             case 'U':
             {
                 std::uint8_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
                 }
@@ -10286,7 +10481,7 @@ class binary_reader
             case 'i':
             {
                 std::int8_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
                 }
@@ -10297,7 +10492,7 @@ class binary_reader
             case 'I':
             {
                 std::int16_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
                 }
@@ -10308,7 +10503,7 @@ class binary_reader
             case 'l':
             {
                 std::int32_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
                 }
@@ -10319,7 +10514,7 @@ class binary_reader
             case 'L':
             {
                 std::int64_t number{};
-                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format_t::ubjson, number)))
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
                 {
                     return false;
                 }
@@ -10327,13 +10522,105 @@ class binary_reader
                 return true;
             }
 
-            default:
+            case 'u':
             {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                        exception_message(input_format_t::ubjson, concat("expected length type specification (U, i, I, l, L) after '#'; last byte: 0x", last_token), "size"), nullptr));
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint16_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
             }
+
+            case 'm':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint32_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                {
+                    return false;
+                }
+                result = static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case 'M':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint64_t number{};
+                if (JSON_HEDLEY_UNLIKELY(!get_number(input_format, number)))
+                {
+                    return false;
+                }
+                result = detail::conditional_static_cast<std::size_t>(number);
+                return true;
+            }
+
+            case '[':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::vector<size_t> dim;
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_ndarray_size(dim)))
+                {
+                    return false;
+                }
+                if (dim.size() == 1 || (dim.size() == 2 && dim.at(0) == 1)) // return normal array size if 1D row vector
+                {
+                    result = dim.at(dim.size() - 1);
+                    return true;
+                }
+                if (!dim.empty())  // if ndarray, convert to an object in JData annotated array format
+                {
+                    string_t key = "_ArraySize_";
+                    if (JSON_HEDLEY_UNLIKELY(!sax->start_object(3) || !sax->key(key) || !sax->start_array(dim.size())))
+                    {
+                        return false;
+                    }
+                    result = 1;
+                    for (auto i : dim)
+                    {
+                        result *= i;
+                        if (JSON_HEDLEY_UNLIKELY(!sax->number_integer(static_cast<number_integer_t>(i))))
+                        {
+                            return false;
+                        }
+                    }
+                    result |= (1ull << (sizeof(result) * 8 - 1)); // low 63 bit of result stores the total element count, sign-bit indicates ndarray
+                    return sax->end_array();
+                }
+                result = 0;
+                return true;
+            }
+
+            default:
+                break;
         }
+        auto last_token = get_token_string();
+        std::string message;
+
+        if (input_format != input_format_t::bjdata)
+        {
+            message = "expected length type specification (U, i, I, l, L) after '#'; last byte: 0x" + last_token;
+        }
+        else
+        {
+            message = "expected length type specification (U, i, u, I, m, l, M, L) after '#'; last byte: 0x" + last_token;
+        }
+        return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read, exception_message(input_format, message, "size"), nullptr));
     }
 
     /*!
@@ -10355,8 +10642,10 @@ class binary_reader
 
         if (current == '$')
         {
+            std::vector<char_int_type> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
+
             result.second = get();  // must not ignore 'N', because 'N' maybe the type
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "type")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "type") || (input_format == input_format_t::bjdata && std::find(bjdx.begin(), bjdx.end(), result.second) != bjdx.end() )))
             {
                 return false;
             }
@@ -10364,13 +10653,13 @@ class binary_reader
             get_ignore_noop();
             if (JSON_HEDLEY_UNLIKELY(current != '#'))
             {
-                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "value")))
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "value")))
                 {
                     return false;
                 }
                 auto last_token = get_token_string();
                 return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format_t::ubjson, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
+                                        exception_message(input_format, concat("expected '#' after type information; last byte: 0x", last_token), "size"), nullptr));
             }
 
             return get_ubjson_size_value(result.first);
@@ -10393,7 +10682,7 @@ class binary_reader
         switch (prefix)
         {
             case std::char_traits<char_type>::eof():  // EOF
-                return unexpect_eof(input_format_t::ubjson, "value");
+                return unexpect_eof(input_format, "value");
 
             case 'T':  // true
                 return sax->boolean(true);
@@ -10406,43 +10695,125 @@ class binary_reader
             case 'U':
             {
                 std::uint8_t number{};
-                return get_number(input_format_t::ubjson, number) && sax->number_unsigned(number);
+                return get_number(input_format, number) && sax->number_unsigned(number);
             }
 
             case 'i':
             {
                 std::int8_t number{};
-                return get_number(input_format_t::ubjson, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(number);
             }
 
             case 'I':
             {
                 std::int16_t number{};
-                return get_number(input_format_t::ubjson, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(number);
             }
 
             case 'l':
             {
                 std::int32_t number{};
-                return get_number(input_format_t::ubjson, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(number);
             }
 
             case 'L':
             {
                 std::int64_t number{};
-                return get_number(input_format_t::ubjson, number) && sax->number_integer(number);
+                return get_number(input_format, number) && sax->number_integer(number);
+            }
+
+            case 'u':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint16_t number{};
+                return get_number(input_format, number) && sax->number_unsigned(number);
+            }
+
+            case 'm':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint32_t number{};
+                return get_number(input_format, number) && sax->number_unsigned(number);
+            }
+
+            case 'M':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                std::uint64_t number{};
+                return get_number(input_format, number) && sax->number_unsigned(number);
+            }
+
+            case 'h':
+            {
+                if (input_format != input_format_t::bjdata)
+                {
+                    break;
+                }
+                const auto byte1_raw = get();
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
+                {
+                    return false;
+                }
+                const auto byte2_raw = get();
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
+                {
+                    return false;
+                }
+
+                const auto byte1 = static_cast<unsigned char>(byte1_raw);
+                const auto byte2 = static_cast<unsigned char>(byte2_raw);
+
+                // code from RFC 7049, Appendix D, Figure 3:
+                // As half-precision floating-point numbers were only added
+                // to IEEE 754 in 2008, today's programming platforms often
+                // still only have limited support for them. It is very
+                // easy to include at least decoding support for them even
+                // without such support. An example of a small decoder for
+                // half-precision floating-point numbers in the C language
+                // is shown in Fig. 3.
+                const auto half = static_cast<unsigned int>((byte2 << 8u) + byte1);
+                const double val = [&half]
+                {
+                    const int exp = (half >> 10u) & 0x1Fu;
+                    const unsigned int mant = half & 0x3FFu;
+                    JSON_ASSERT(0 <= exp&& exp <= 32);
+                    JSON_ASSERT(mant <= 1024);
+                    switch (exp)
+                    {
+                        case 0:
+                            return std::ldexp(mant, -24);
+                        case 31:
+                            return (mant == 0)
+                            ? std::numeric_limits<double>::infinity()
+                            : std::numeric_limits<double>::quiet_NaN();
+                        default:
+                            return std::ldexp(mant + 1024, exp - 25);
+                    }
+                }();
+                return sax->number_float((half & 0x8000u) != 0
+                                         ? static_cast<number_float_t>(-val)
+                                         : static_cast<number_float_t>(val), "");
             }
 
             case 'd':
             {
                 float number{};
-                return get_number(input_format_t::ubjson, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'D':
             {
                 double number{};
-                return get_number(input_format_t::ubjson, number) && sax->number_float(static_cast<number_float_t>(number), "");
+                return get_number(input_format, number) && sax->number_float(static_cast<number_float_t>(number), "");
             }
 
             case 'H':
@@ -10453,7 +10824,7 @@ class binary_reader
             case 'C':  // char
             {
                 get();
-                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "char")))
+                if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "char")))
                 {
                     return false;
                 }
@@ -10461,7 +10832,7 @@ class binary_reader
                 {
                     auto last_token = get_token_string();
                     return sax->parse_error(chars_read, last_token, parse_error::create(113, chars_read,
-                                            exception_message(input_format_t::ubjson, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
+                                            exception_message(input_format, concat("byte after 'C' must be in range 0x00..0x7F; last byte: 0x", last_token), "char"), nullptr));
                 }
                 string_t s(1, static_cast<typename string_t::value_type>(current));
                 return sax->string(s);
@@ -10480,12 +10851,10 @@ class binary_reader
                 return get_ubjson_object();
 
             default: // anything else
-            {
-                auto last_token = get_token_string();
-                return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read,
-                                        exception_message(input_format_t::ubjson, concat("invalid byte: 0x", last_token), "value"), nullptr));
-            }
+                break;
         }
+        auto last_token = get_token_string();
+        return sax->parse_error(chars_read, last_token, parse_error::create(112, chars_read, exception_message(input_format, "invalid byte: 0x" + last_token, "value"), nullptr));
     }
 
     /*!
@@ -10497,6 +10866,44 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
         {
             return false;
+        }
+
+        // detect and encode bjdata ndarray as an object in JData annotated array format (https://github.com/NeuroJSON/jdata):
+        // {"_ArrayType_" : "typeid", "_ArraySize_" : [n1, n2, ...], "_ArrayData_" : [v1, v2, ...]}
+
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.first >= (1ull << (sizeof(std::size_t) * 8 - 1)))
+        {
+            std::map<char_int_type, string_t> bjdtype = {{'U', "uint8"},  {'i', "int8"},  {'u', "uint16"}, {'I', "int16"},
+                {'m', "uint32"}, {'l', "int32"}, {'M', "uint64"}, {'L', "int64"}, {'d', "single"}, {'D', "double"}, {'C', "char"}
+            };
+
+            string_t key = "_ArrayType_";
+            if (JSON_HEDLEY_UNLIKELY(bjdtype.count(size_and_type.second) == 0 || !sax->key(key) || !sax->string(bjdtype[size_and_type.second]) ))
+            {
+                return false;
+            }
+
+            if (size_and_type.second == 'C')
+            {
+                size_and_type.second = 'U';
+            }
+
+            size_and_type.first &= ~(1ull << (sizeof(std::size_t) * 8 - 1));
+            key = "_ArrayData_";
+            if (JSON_HEDLEY_UNLIKELY(!sax->key(key) || !sax->start_array(size_and_type.first) ))
+            {
+                return false;
+            }
+
+            for (std::size_t i = 0; i < size_and_type.first; ++i)
+            {
+                if (JSON_HEDLEY_UNLIKELY(!get_ubjson_value(size_and_type.second)))
+                {
+                    return false;
+                }
+            }
+
+            return (sax->end_array() && sax->end_object());
         }
 
         if (size_and_type.first != string_t::npos)
@@ -10557,6 +10964,11 @@ class binary_reader
     {
         std::pair<std::size_t, char_int_type> size_and_type;
         if (JSON_HEDLEY_UNLIKELY(!get_ubjson_size_type(size_and_type)))
+        {
+            return false;
+        }
+
+        if (input_format == input_format_t::bjdata && size_and_type.first != string_t::npos && size_and_type.first >= (1ull << (sizeof(std::size_t) * 8 - 1)))
         {
             return false;
         }
@@ -10643,7 +11055,7 @@ class binary_reader
         for (std::size_t i = 0; i < size; ++i)
         {
             get();
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format_t::ubjson, "number")))
+            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(input_format, "number")))
             {
                 return false;
             }
@@ -10662,7 +11074,7 @@ class binary_reader
         if (JSON_HEDLEY_UNLIKELY(result_remainder != token_type::end_of_input))
         {
             return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                    exception_message(input_format_t::ubjson, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+                                    exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
         }
 
         switch (result_number)
@@ -10689,7 +11101,7 @@ class binary_reader
             case token_type::literal_or_value:
             default:
                 return sax->parse_error(chars_read, number_string, parse_error::create(115, chars_read,
-                                        exception_message(input_format_t::ubjson, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
+                                        exception_message(input_format, concat("invalid number text: ", number_lexer.get_token_string()), "high-precision number"), nullptr));
         }
     }
 
@@ -10738,6 +11150,8 @@ class binary_reader
     @note This function needs to respect the system's endianness, because
           bytes in CBOR, MessagePack, and UBJSON are stored in network order
           (big endian) and therefore need reordering on little endian systems.
+          On the other hand, BSON and BJData use little endian and should reorder
+          on big endian systems.
     */
     template<typename NumberType, bool InputIsLittleEndian = false>
     bool get_number(const input_format_t format, NumberType& result)
@@ -10753,7 +11167,7 @@ class binary_reader
             }
 
             // reverse byte order prior to conversion if necessary
-            if (is_little_endian != InputIsLittleEndian)
+            if (is_little_endian != (InputIsLittleEndian || format == input_format_t::bjdata))
             {
                 vec[sizeof(NumberType) - i - 1] = static_cast<std::uint8_t>(current);
             }
@@ -10890,6 +11304,10 @@ class binary_reader
                 error_msg += "BSON";
                 break;
 
+            case input_format_t::bjdata:
+                error_msg += "BJData";
+                break;
+
             case input_format_t::json: // LCOV_EXCL_LINE
             default:            // LCOV_EXCL_LINE
                 JSON_ASSERT(false); // NOLINT(cert-dcl03-c,hicpp-static-assert,misc-static-assert) LCOV_EXCL_LINE
@@ -10910,6 +11328,9 @@ class binary_reader
 
     /// whether we can assume little endianness
     const bool is_little_endian = little_endianness();
+
+    /// input format
+    const input_format_t input_format = input_format_t::json;
 
     /// the SAX parser
     json_sax_t* sax = nullptr;
@@ -13427,12 +13848,14 @@ class json_ref
 
 #include <algorithm> // reverse
 #include <array> // array
+#include <map> // map
 #include <cmath> // isnan, isinf
 #include <cstdint> // uint8_t, uint16_t, uint32_t, uint64_t
 #include <cstring> // memcpy
 #include <limits> // numeric_limits
 #include <string> // string
 #include <utility> // move
+#include <vector> // vector
 
 // #include <nlohmann/detail/input/binary_reader.hpp>
 
@@ -14292,9 +14715,11 @@ class binary_writer
     @param[in] use_count   whether to use '#' prefixes (optimized format)
     @param[in] use_type    whether to use '$' prefixes (optimized format)
     @param[in] add_prefix  whether prefixes need to be used for this value
+    @param[in] use_bjdata  whether write in BJData format, default is false
     */
     void write_ubjson(const BasicJsonType& j, const bool use_count,
-                      const bool use_type, const bool add_prefix = true)
+                      const bool use_type, const bool add_prefix = true,
+                      const bool use_bjdata = false)
     {
         switch (j.type())
         {
@@ -14320,19 +14745,19 @@ class binary_writer
 
             case value_t::number_integer:
             {
-                write_number_with_ubjson_prefix(j.m_value.number_integer, add_prefix);
+                write_number_with_ubjson_prefix(j.m_value.number_integer, add_prefix, use_bjdata);
                 break;
             }
 
             case value_t::number_unsigned:
             {
-                write_number_with_ubjson_prefix(j.m_value.number_unsigned, add_prefix);
+                write_number_with_ubjson_prefix(j.m_value.number_unsigned, add_prefix, use_bjdata);
                 break;
             }
 
             case value_t::number_float:
             {
-                write_number_with_ubjson_prefix(j.m_value.number_float, add_prefix);
+                write_number_with_ubjson_prefix(j.m_value.number_float, add_prefix, use_bjdata);
                 break;
             }
 
@@ -14342,7 +14767,7 @@ class binary_writer
                 {
                     oa->write_character(to_char_type('S'));
                 }
-                write_number_with_ubjson_prefix(j.m_value.string->size(), true);
+                write_number_with_ubjson_prefix(j.m_value.string->size(), true, use_bjdata);
                 oa->write_characters(
                     reinterpret_cast<const CharType*>(j.m_value.string->c_str()),
                     j.m_value.string->size());
@@ -14360,14 +14785,16 @@ class binary_writer
                 if (use_type && !j.m_value.array->empty())
                 {
                     JSON_ASSERT(use_count);
-                    const CharType first_prefix = ubjson_prefix(j.front());
+                    const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
                     const bool same_prefix = std::all_of(j.begin() + 1, j.end(),
-                                                         [this, first_prefix](const BasicJsonType & v)
+                                                         [this, first_prefix, use_bjdata](const BasicJsonType & v)
                     {
-                        return ubjson_prefix(v) == first_prefix;
+                        return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    if (same_prefix)
+                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
+
+                    if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
                         prefix_required = false;
                         oa->write_character(to_char_type('$'));
@@ -14378,12 +14805,12 @@ class binary_writer
                 if (use_count)
                 {
                     oa->write_character(to_char_type('#'));
-                    write_number_with_ubjson_prefix(j.m_value.array->size(), true);
+                    write_number_with_ubjson_prefix(j.m_value.array->size(), true, use_bjdata);
                 }
 
                 for (const auto& el : *j.m_value.array)
                 {
-                    write_ubjson(el, use_count, use_type, prefix_required);
+                    write_ubjson(el, use_count, use_type, prefix_required, use_bjdata);
                 }
 
                 if (!use_count)
@@ -14411,7 +14838,7 @@ class binary_writer
                 if (use_count)
                 {
                     oa->write_character(to_char_type('#'));
-                    write_number_with_ubjson_prefix(j.m_value.binary->size(), true);
+                    write_number_with_ubjson_prefix(j.m_value.binary->size(), true, use_bjdata);
                 }
 
                 if (use_type)
@@ -14439,6 +14866,14 @@ class binary_writer
 
             case value_t::object:
             {
+                if (use_bjdata && j.m_value.object->size() == 3 && j.m_value.object->find("_ArrayType_") != j.m_value.object->end() && j.m_value.object->find("_ArraySize_") != j.m_value.object->end() && j.m_value.object->find("_ArrayData_") != j.m_value.object->end())
+                {
+                    if (!write_bjdata_ndarray(*j.m_value.object, use_count, use_type))  // decode bjdata ndarray in the JData format (https://github.com/NeuroJSON/jdata)
+                    {
+                        break;
+                    }
+                }
+
                 if (add_prefix)
                 {
                     oa->write_character(to_char_type('{'));
@@ -14448,14 +14883,16 @@ class binary_writer
                 if (use_type && !j.m_value.object->empty())
                 {
                     JSON_ASSERT(use_count);
-                    const CharType first_prefix = ubjson_prefix(j.front());
+                    const CharType first_prefix = ubjson_prefix(j.front(), use_bjdata);
                     const bool same_prefix = std::all_of(j.begin(), j.end(),
-                                                         [this, first_prefix](const BasicJsonType & v)
+                                                         [this, first_prefix, use_bjdata](const BasicJsonType & v)
                     {
-                        return ubjson_prefix(v) == first_prefix;
+                        return ubjson_prefix(v, use_bjdata) == first_prefix;
                     });
 
-                    if (same_prefix)
+                    std::vector<CharType> bjdx = {'[', '{', 'S', 'H', 'T', 'F', 'N', 'Z'}; // excluded markers in bjdata optimized type
+
+                    if (same_prefix && !(use_bjdata && std::find(bjdx.begin(), bjdx.end(), first_prefix) != bjdx.end()))
                     {
                         prefix_required = false;
                         oa->write_character(to_char_type('$'));
@@ -14466,16 +14903,16 @@ class binary_writer
                 if (use_count)
                 {
                     oa->write_character(to_char_type('#'));
-                    write_number_with_ubjson_prefix(j.m_value.object->size(), true);
+                    write_number_with_ubjson_prefix(j.m_value.object->size(), true, use_bjdata);
                 }
 
                 for (const auto& el : *j.m_value.object)
                 {
-                    write_number_with_ubjson_prefix(el.first.size(), true);
+                    write_number_with_ubjson_prefix(el.first.size(), true, use_bjdata);
                     oa->write_characters(
                         reinterpret_cast<const CharType*>(el.first.c_str()),
                         el.first.size());
-                    write_ubjson(el.second, use_count, use_type, prefix_required);
+                    write_ubjson(el.second, use_count, use_type, prefix_required, use_bjdata);
                 }
 
                 if (!use_count)
@@ -14542,7 +14979,7 @@ class binary_writer
                            const double value)
     {
         write_bson_entry_header(name, 0x01);
-        write_number<double, true>(value);
+        write_number<double>(value, true);
     }
 
     /*!
@@ -14561,7 +14998,7 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x02);
 
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size() + 1ul));
+        write_number<std::int32_t>(static_cast<std::int32_t>(value.size() + 1ul), true);
         oa->write_characters(
             reinterpret_cast<const CharType*>(value.c_str()),
             value.size() + 1);
@@ -14594,12 +15031,12 @@ class binary_writer
         if ((std::numeric_limits<std::int32_t>::min)() <= value && value <= (std::numeric_limits<std::int32_t>::max)())
         {
             write_bson_entry_header(name, 0x10); // int32
-            write_number<std::int32_t, true>(static_cast<std::int32_t>(value));
+            write_number<std::int32_t>(static_cast<std::int32_t>(value), true);
         }
         else
         {
             write_bson_entry_header(name, 0x12); // int64
-            write_number<std::int64_t, true>(static_cast<std::int64_t>(value));
+            write_number<std::int64_t>(static_cast<std::int64_t>(value), true);
         }
     }
 
@@ -14622,12 +15059,12 @@ class binary_writer
         if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
         {
             write_bson_entry_header(name, 0x10 /* int32 */);
-            write_number<std::int32_t, true>(static_cast<std::int32_t>(j.m_value.number_unsigned));
+            write_number<std::int32_t>(static_cast<std::int32_t>(j.m_value.number_unsigned), true);
         }
         else if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
         {
             write_bson_entry_header(name, 0x12 /* int64 */);
-            write_number<std::int64_t, true>(static_cast<std::int64_t>(j.m_value.number_unsigned));
+            write_number<std::int64_t>(static_cast<std::int64_t>(j.m_value.number_unsigned), true);
         }
         else
         {
@@ -14675,7 +15112,7 @@ class binary_writer
                           const typename BasicJsonType::array_t& value)
     {
         write_bson_entry_header(name, 0x04); // array
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(calc_bson_array_size(value)));
+        write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_array_size(value)), true);
 
         std::size_t array_index = 0ul;
 
@@ -14695,7 +15132,7 @@ class binary_writer
     {
         write_bson_entry_header(name, 0x05);
 
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(value.size()));
+        write_number<std::int32_t>(static_cast<std::int32_t>(value.size()), true);
         write_number(value.has_subtype() ? static_cast<std::uint8_t>(value.subtype()) : static_cast<std::uint8_t>(0x00));
 
         oa->write_characters(reinterpret_cast<const CharType*>(value.data()), value.size());
@@ -14817,7 +15254,7 @@ class binary_writer
     */
     void write_bson_object(const typename BasicJsonType::object_t& value)
     {
-        write_number<std::int32_t, true>(static_cast<std::int32_t>(calc_bson_object_size(value)));
+        write_number<std::int32_t>(static_cast<std::int32_t>(calc_bson_object_size(value)), true);
 
         for (const auto& el : value)
         {
@@ -14863,20 +15300,22 @@ class binary_writer
     template<typename NumberType, typename std::enable_if<
                  std::is_floating_point<NumberType>::value, int>::type = 0>
     void write_number_with_ubjson_prefix(const NumberType n,
-                                         const bool add_prefix)
+                                         const bool add_prefix,
+                                         const bool use_bjdata)
     {
         if (add_prefix)
         {
             oa->write_character(get_ubjson_float_prefix(n));
         }
-        write_number(n);
+        write_number(n, use_bjdata);
     }
 
     // UBJSON: write number (unsigned integer)
     template<typename NumberType, typename std::enable_if<
                  std::is_unsigned<NumberType>::value, int>::type = 0>
     void write_number_with_ubjson_prefix(const NumberType n,
-                                         const bool add_prefix)
+                                         const bool add_prefix,
+                                         const bool use_bjdata)
     {
         if (n <= static_cast<std::uint64_t>((std::numeric_limits<std::int8_t>::max)()))
         {
@@ -14884,7 +15323,7 @@ class binary_writer
             {
                 oa->write_character(to_char_type('i'));  // int8
             }
-            write_number(static_cast<std::uint8_t>(n));
+            write_number(static_cast<std::uint8_t>(n), use_bjdata);
         }
         else if (n <= (std::numeric_limits<std::uint8_t>::max)())
         {
@@ -14892,7 +15331,7 @@ class binary_writer
             {
                 oa->write_character(to_char_type('U'));  // uint8
             }
-            write_number(static_cast<std::uint8_t>(n));
+            write_number(static_cast<std::uint8_t>(n), use_bjdata);
         }
         else if (n <= static_cast<std::uint64_t>((std::numeric_limits<std::int16_t>::max)()))
         {
@@ -14900,7 +15339,15 @@ class binary_writer
             {
                 oa->write_character(to_char_type('I'));  // int16
             }
-            write_number(static_cast<std::int16_t>(n));
+            write_number(static_cast<std::int16_t>(n), use_bjdata);
+        }
+        else if (use_bjdata && n <= static_cast<uint64_t>((std::numeric_limits<uint16_t>::max)()))
+        {
+            if (add_prefix)
+            {
+                oa->write_character(to_char_type('u'));  // uint16 - bjdata only
+            }
+            write_number(static_cast<std::uint16_t>(n), use_bjdata);
         }
         else if (n <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
         {
@@ -14908,7 +15355,15 @@ class binary_writer
             {
                 oa->write_character(to_char_type('l'));  // int32
             }
-            write_number(static_cast<std::int32_t>(n));
+            write_number(static_cast<std::int32_t>(n), use_bjdata);
+        }
+        else if (use_bjdata && n <= static_cast<uint64_t>((std::numeric_limits<uint32_t>::max)()))
+        {
+            if (add_prefix)
+            {
+                oa->write_character(to_char_type('m'));  // uint32 - bjdata only
+            }
+            write_number(static_cast<std::uint32_t>(n), use_bjdata);
         }
         else if (n <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
         {
@@ -14916,7 +15371,15 @@ class binary_writer
             {
                 oa->write_character(to_char_type('L'));  // int64
             }
-            write_number(static_cast<std::int64_t>(n));
+            write_number(static_cast<std::int64_t>(n), use_bjdata);
+        }
+        else if (use_bjdata && n <= (std::numeric_limits<uint64_t>::max)())
+        {
+            if (add_prefix)
+            {
+                oa->write_character(to_char_type('M'));  // uint64 - bjdata only
+            }
+            write_number(static_cast<std::uint64_t>(n), use_bjdata);
         }
         else
         {
@@ -14926,7 +15389,7 @@ class binary_writer
             }
 
             const auto number = BasicJsonType(n).dump();
-            write_number_with_ubjson_prefix(number.size(), true);
+            write_number_with_ubjson_prefix(number.size(), true, use_bjdata);
             for (std::size_t i = 0; i < number.size(); ++i)
             {
                 oa->write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
@@ -14939,7 +15402,8 @@ class binary_writer
                    std::is_signed<NumberType>::value&&
                    !std::is_floating_point<NumberType>::value, int >::type = 0 >
     void write_number_with_ubjson_prefix(const NumberType n,
-                                         const bool add_prefix)
+                                         const bool add_prefix,
+                                         const bool use_bjdata)
     {
         if ((std::numeric_limits<std::int8_t>::min)() <= n && n <= (std::numeric_limits<std::int8_t>::max)())
         {
@@ -14947,7 +15411,7 @@ class binary_writer
             {
                 oa->write_character(to_char_type('i'));  // int8
             }
-            write_number(static_cast<std::int8_t>(n));
+            write_number(static_cast<std::int8_t>(n), use_bjdata);
         }
         else if (static_cast<std::int64_t>((std::numeric_limits<std::uint8_t>::min)()) <= n && n <= static_cast<std::int64_t>((std::numeric_limits<std::uint8_t>::max)()))
         {
@@ -14955,7 +15419,7 @@ class binary_writer
             {
                 oa->write_character(to_char_type('U'));  // uint8
             }
-            write_number(static_cast<std::uint8_t>(n));
+            write_number(static_cast<std::uint8_t>(n), use_bjdata);
         }
         else if ((std::numeric_limits<std::int16_t>::min)() <= n && n <= (std::numeric_limits<std::int16_t>::max)())
         {
@@ -14963,7 +15427,15 @@ class binary_writer
             {
                 oa->write_character(to_char_type('I'));  // int16
             }
-            write_number(static_cast<std::int16_t>(n));
+            write_number(static_cast<std::int16_t>(n), use_bjdata);
+        }
+        else if (use_bjdata && (static_cast<std::int64_t>((std::numeric_limits<std::uint16_t>::min)()) <= n && n <= static_cast<std::int64_t>((std::numeric_limits<std::uint16_t>::max)())))
+        {
+            if (add_prefix)
+            {
+                oa->write_character(to_char_type('u'));  // uint16 - bjdata only
+            }
+            write_number(static_cast<uint16_t>(n), use_bjdata);
         }
         else if ((std::numeric_limits<std::int32_t>::min)() <= n && n <= (std::numeric_limits<std::int32_t>::max)())
         {
@@ -14971,7 +15443,15 @@ class binary_writer
             {
                 oa->write_character(to_char_type('l'));  // int32
             }
-            write_number(static_cast<std::int32_t>(n));
+            write_number(static_cast<std::int32_t>(n), use_bjdata);
+        }
+        else if (use_bjdata && (static_cast<std::int64_t>((std::numeric_limits<std::uint32_t>::min)()) <= n && n <= static_cast<std::int64_t>((std::numeric_limits<std::uint32_t>::max)())))
+        {
+            if (add_prefix)
+            {
+                oa->write_character(to_char_type('m'));  // uint32 - bjdata only
+            }
+            write_number(static_cast<uint32_t>(n), use_bjdata);
         }
         else if ((std::numeric_limits<std::int64_t>::min)() <= n && n <= (std::numeric_limits<std::int64_t>::max)())
         {
@@ -14979,7 +15459,7 @@ class binary_writer
             {
                 oa->write_character(to_char_type('L'));  // int64
             }
-            write_number(static_cast<std::int64_t>(n));
+            write_number(static_cast<std::int64_t>(n), use_bjdata);
         }
         // LCOV_EXCL_START
         else
@@ -14990,7 +15470,7 @@ class binary_writer
             }
 
             const auto number = BasicJsonType(n).dump();
-            write_number_with_ubjson_prefix(number.size(), true);
+            write_number_with_ubjson_prefix(number.size(), true, use_bjdata);
             for (std::size_t i = 0; i < number.size(); ++i)
             {
                 oa->write_character(to_char_type(static_cast<std::uint8_t>(number[i])));
@@ -15002,7 +15482,7 @@ class binary_writer
     /*!
     @brief determine the type prefix of container values
     */
-    CharType ubjson_prefix(const BasicJsonType& j) const noexcept
+    CharType ubjson_prefix(const BasicJsonType& j, const bool use_bjdata) const noexcept
     {
         switch (j.type())
         {
@@ -15026,9 +15506,17 @@ class binary_writer
                 {
                     return 'I';
                 }
+                if (use_bjdata && ((std::numeric_limits<std::uint16_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::uint16_t>::max)()))
+                {
+                    return 'u';
+                }
                 if ((std::numeric_limits<std::int32_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::int32_t>::max)())
                 {
                     return 'l';
+                }
+                if (use_bjdata && ((std::numeric_limits<std::uint32_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::uint32_t>::max)()))
+                {
+                    return 'm';
                 }
                 if ((std::numeric_limits<std::int64_t>::min)() <= j.m_value.number_integer && j.m_value.number_integer <= (std::numeric_limits<std::int64_t>::max)())
                 {
@@ -15052,13 +15540,25 @@ class binary_writer
                 {
                     return 'I';
                 }
+                if (use_bjdata && j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint16_t>::max)()))
+                {
+                    return 'u';
+                }
                 if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int32_t>::max)()))
                 {
                     return 'l';
                 }
+                if (use_bjdata && j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::uint32_t>::max)()))
+                {
+                    return 'm';
+                }
                 if (j.m_value.number_unsigned <= static_cast<std::uint64_t>((std::numeric_limits<std::int64_t>::max)()))
                 {
                     return 'L';
+                }
+                if (use_bjdata && j.m_value.number_unsigned <= (std::numeric_limits<std::uint64_t>::max)())
+                {
+                    return 'M';
                 }
                 // anything else is treated as high-precision number
                 return 'H'; // LCOV_EXCL_LINE
@@ -15093,6 +15593,118 @@ class binary_writer
         return 'D';  // float 64
     }
 
+    /*!
+    @return false if the object is successfully converted to a bjdata ndarray, true if the type or size is invalid
+    */
+    bool write_bjdata_ndarray(const typename BasicJsonType::object_t& value, const bool use_count, const bool use_type)
+    {
+        std::map<string_t, CharType> bjdtype = {{"uint8", 'U'},  {"int8", 'i'},  {"uint16", 'u'}, {"int16", 'I'},
+            {"uint32", 'm'}, {"int32", 'l'}, {"uint64", 'M'}, {"int64", 'L'}, {"single", 'd'}, {"double", 'D'}, {"char", 'C'}
+        };
+
+        string_t key = "_ArrayType_";
+        auto it = bjdtype.find(static_cast<string_t>(value.at(key)));
+        if (it == bjdtype.end())
+        {
+            return true;
+        }
+        CharType dtype = it->second;
+
+        key = "_ArraySize_";
+        std::size_t len = (value.at(key).empty() ? 0 : 1);
+        for (const auto& el : value.at(key))
+        {
+            len *= static_cast<std::size_t>(el.m_value.number_unsigned);
+        }
+
+        key = "_ArrayData_";
+        if (value.at(key).size() != len)
+        {
+            return true;
+        }
+
+        oa->write_character('[');
+        oa->write_character('$');
+        oa->write_character(dtype);
+        oa->write_character('#');
+
+        key = "_ArraySize_";
+        write_ubjson(value.at(key), use_count, use_type, true,  true);
+
+        key = "_ArrayData_";
+        if (dtype == 'U' || dtype == 'C')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::uint8_t>(el.m_value.number_unsigned), true);
+            }
+        }
+        else if (dtype == 'i')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::int8_t>(el.m_value.number_integer), true);
+            }
+        }
+        else if (dtype == 'u')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::uint16_t>(el.m_value.number_unsigned), true);
+            }
+        }
+        else if (dtype == 'I')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::int16_t>(el.m_value.number_integer), true);
+            }
+        }
+        else if (dtype == 'm')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::uint32_t>(el.m_value.number_unsigned), true);
+            }
+        }
+        else if (dtype == 'l')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::int32_t>(el.m_value.number_integer), true);
+            }
+        }
+        else if (dtype == 'M')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::uint64_t>(el.m_value.number_unsigned), true);
+            }
+        }
+        else if (dtype == 'L')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<std::int64_t>(el.m_value.number_integer), true);
+            }
+        }
+        else if (dtype == 'd')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<float>(el.m_value.number_float), true);
+            }
+        }
+        else if (dtype == 'D')
+        {
+            for (const auto& el : value.at(key))
+            {
+                write_number(static_cast<double>(el.m_value.number_float), true);
+            }
+        }
+        return false;
+    }
+
     ///////////////////////
     // Utility functions //
     ///////////////////////
@@ -15100,16 +15712,18 @@ class binary_writer
     /*
     @brief write a number to output input
     @param[in] n number of type @a NumberType
-    @tparam NumberType the type of the number
-    @tparam OutputIsLittleEndian Set to true if output data is
+    @param[in] OutputIsLittleEndian Set to true if output data is
                                  required to be little endian
+    @tparam NumberType the type of the number
 
     @note This function needs to respect the system's endianness, because bytes
           in CBOR, MessagePack, and UBJSON are stored in network order (big
           endian) and therefore need reordering on little endian systems.
+          On the other hand, BSON and BJData use little endian and should reorder
+          on big endian systems.
     */
-    template<typename NumberType, bool OutputIsLittleEndian = false>
-    void write_number(const NumberType n)
+    template<typename NumberType>
+    void write_number(const NumberType n, const bool OutputIsLittleEndian = false)
     {
         // step 1: write number to array of length NumberType
         std::array<CharType, sizeof(NumberType)> vec{};
@@ -17311,7 +17925,7 @@ class serializer
 // #include <nlohmann/ordered_map.hpp>
 
 
-#include <functional> // less
+#include <functional> // equal_to, less
 #include <initializer_list> // initializer_list
 #include <iterator> // input_iterator_tag, iterator_traits
 #include <memory> // allocator
@@ -17339,6 +17953,11 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     using const_iterator = typename Container::const_iterator;
     using size_type = typename Container::size_type;
     using value_type = typename Container::value_type;
+#ifdef JSON_HAS_CPP_14
+    using key_compare = std::equal_to<>;
+#else
+    using key_compare = std::equal_to<Key>;
+#endif
 
     // Explicit constructors instead of `using Container::Container`
     // otherwise older compilers choke on it (GCC <= 5.5, xcode <= 9.4)
@@ -17354,7 +17973,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return {it, false};
             }
@@ -17377,7 +17996,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it->second;
             }
@@ -17390,7 +18009,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it->second;
             }
@@ -17403,7 +18022,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 // Since we cannot move const Keys, re-construct them in place
                 for (auto next = it; ++next != this->end(); ++it)
@@ -17475,7 +18094,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return 1;
             }
@@ -17487,7 +18106,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it;
             }
@@ -17499,7 +18118,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == key)
+            if (m_compare(it->first, key))
             {
                 return it;
             }
@@ -17516,7 +18135,7 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
     {
         for (auto it = this->begin(); it != this->end(); ++it)
         {
-            if (it->first == value.first)
+            if (m_compare(it->first, value.first))
             {
                 return {it, false};
             }
@@ -17537,6 +18156,9 @@ template <class Key, class T, class IgnoredLess = std::less<Key>,
             insert(*it);
         }
     }
+
+private:
+    JSON_NO_UNIQUE_ADDRESS key_compare m_compare = key_compare();
 };
 
 }  // namespace nlohmann
@@ -17798,21 +18420,23 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// the template arguments passed to class @ref basic_json.
     /// @{
 
-    /// @brief object key comparator type
-    /// @sa https://json.nlohmann.me/api/basic_json/object_comparator_t/
+    /// @brief default object key comparator type
+    /// The actual object key comparator type (@ref object_comparator_t) may be
+    /// different.
+    /// @sa https://json.nlohmann.me/api/basic_json/default_object_comparator_t/
 #if defined(JSON_HAS_CPP_14)
-    // Use transparent comparator if possible, combined with perfect forwarding
-    // on find() and count() calls prevents unnecessary string construction.
-    using object_comparator_t = std::less<>;
+    // use of transparent comparator avoids unnecessary repeated construction of temporaries
+    // in functions involving lookup by key with types other than object_t::key_type (aka. StringType)
+    using default_object_comparator_t = std::less<>;
 #else
-    using object_comparator_t = std::less<StringType>;
+    using default_object_comparator_t = std::less<StringType>;
 #endif
 
     /// @brief a type for an object
     /// @sa https://json.nlohmann.me/api/basic_json/object_t/
     using object_t = ObjectType<StringType,
           basic_json,
-          object_comparator_t,
+          default_object_comparator_t,
           AllocatorType<std::pair<const StringType,
           basic_json>>>;
 
@@ -17843,6 +18467,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     /// @brief a type for a packed binary type
     /// @sa https://json.nlohmann.me/api/basic_json/binary_t/
     using binary_t = nlohmann::byte_container_with_subtype<BinaryType>;
+
+    /// @brief object key comparator type
+    /// @sa https://json.nlohmann.me/api/basic_json/object_comparator_t/
+    using object_comparator_t = detail::actual_object_comparator_t<basic_json>;
 
     /// @}
 
@@ -19448,22 +20076,37 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     reference at(const typename object_t::key_type& key)
     {
         // at only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            JSON_TRY
-            {
-                return set_parent(m_value.object->at(key));
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create better exception explanation
-                JSON_THROW(out_of_range::create(403, detail::concat("key '", key, "' not found"), this));
-            }
-        }
-        else
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
             JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
+
+        auto it = m_value.object->find(key);
+        if (it == m_value.object->end())
+        {
+            JSON_THROW(out_of_range::create(403, detail::concat("key '", key, "' not found"), this));
+        }
+        return set_parent(it->second);
+    }
+
+    /// @brief access specified object element with bounds checking
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+    reference at(KeyType && key)
+    {
+        // at only works for objects
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        {
+            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
+        }
+
+        auto it = m_value.object->find(std::forward<KeyType>(key));
+        if (it == m_value.object->end())
+        {
+            JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(std::forward<KeyType>(key)), "' not found"), this));
+        }
+        return set_parent(it->second);
     }
 
     /// @brief access specified object element with bounds checking
@@ -19471,22 +20114,37 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     const_reference at(const typename object_t::key_type& key) const
     {
         // at only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            JSON_TRY
-            {
-                return m_value.object->at(key);
-            }
-            JSON_CATCH (std::out_of_range&)
-            {
-                // create better exception explanation
-                JSON_THROW(out_of_range::create(403, detail::concat("key '", key, "' not found"), this));
-            }
-        }
-        else
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
         {
             JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
         }
+
+        auto it = m_value.object->find(key);
+        if (it == m_value.object->end())
+        {
+            JSON_THROW(out_of_range::create(403, detail::concat("key '", key, "' not found"), this));
+        }
+        return it->second;
+    }
+
+    /// @brief access specified object element with bounds checking
+    /// @sa https://json.nlohmann.me/api/basic_json/at/
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+    const_reference at(KeyType && key) const
+    {
+        // at only works for objects
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        {
+            JSON_THROW(type_error::create(304, detail::concat("cannot use at() with ", type_name()), this));
+        }
+
+        auto it = m_value.object->find(std::forward<KeyType>(key));
+        if (it == m_value.object->end())
+        {
+            JSON_THROW(out_of_range::create(403, detail::concat("key '", string_t(std::forward<KeyType>(key)), "' not found"), this));
+        }
+        return it->second;
     }
 
     /// @brief access specified array element
@@ -19550,7 +20208,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
-    reference operator[](const typename object_t::key_type& key)
+    reference operator[](typename object_t::key_type key)
     {
         // implicitly convert null value to an empty object
         if (is_null())
@@ -19563,7 +20221,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            return set_parent(m_value.object->operator[](key));
+            auto result = m_value.object->emplace(std::move(key), nullptr);
+            return set_parent(result.first->second);
         }
 
         JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
@@ -19576,31 +20235,47 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
-            return m_value.object->find(key)->second;
+            auto it = m_value.object->find(key);
+            JSON_ASSERT(it != m_value.object->end());
+            return it->second;
         }
 
         JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
     }
 
-    /// @brief access specified object element
-    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
+    // these two functions resolve a (const) char * ambiguity affecting Clang and MSVC
+    // (they seemingly cannot be constrained to resolve the ambiguity)
     template<typename T>
-    JSON_HEDLEY_NON_NULL(2)
     reference operator[](T* key)
     {
-        // implicitly convert null to object
+        return operator[](typename object_t::key_type(key));
+    }
+
+    template<typename T>
+    const_reference operator[](T* key) const
+    {
+        return operator[](typename object_t::key_type(key));
+    }
+
+    /// @brief access specified object element
+    /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+    reference operator[](KeyType && key)
+    {
+        // implicitly convert null value to an empty object
         if (is_null())
         {
             m_type = value_t::object;
-            m_value = value_t::object;
+            m_value.object = create<object_t>();
             assert_invariant();
         }
 
-        // at only works for objects
+        // operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            return set_parent(m_value.object->operator[](key));
+            auto result = m_value.object->emplace(std::forward<KeyType>(key), nullptr);
+            return set_parent(result.first->second);
         }
 
         JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
@@ -19608,15 +20283,16 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief access specified object element
     /// @sa https://json.nlohmann.me/api/basic_json/operator%5B%5D/
-    template<typename T>
-    JSON_HEDLEY_NON_NULL(2)
-    const_reference operator[](T* key) const
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+    const_reference operator[](KeyType && key) const
     {
-        // at only works for objects
+        // const operator[] only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            JSON_ASSERT(m_value.object->find(key) != m_value.object->end());
-            return m_value.object->find(key)->second;
+            auto it = m_value.object->find(std::forward<KeyType>(key));
+            JSON_ASSERT(it != m_value.object->end());
+            return it->second;
         }
 
         JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
@@ -19624,23 +20300,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief access specified object element with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// using std::is_convertible in a std::enable_if will fail when using explicit conversions
-    template < class ValueType, typename std::enable_if <
-                   detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value, int >::type = 0 >
-    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
+    // this is the value(const typename object_t::key_type&) overload
+    template < class KeyType, class ValueType, detail::enable_if_t <
+                   std::is_same<KeyType, typename object_t::key_type>::value
+                   && detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, ValueType>::value, int > = 0 >
+    typename std::decay<ValueType>::type value(const KeyType& key, ValueType && default_value) const
     {
-        // at only works for objects
+        // value only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
             // if key is found, return value and given default value otherwise
             const auto it = find(key);
             if (it != end())
             {
-                return it->template get<ValueType>();
+                return it->template get<typename std::decay<ValueType>::type>();
             }
 
-            return default_value;
+            return std::forward<ValueType>(default_value);
         }
 
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
@@ -19654,13 +20331,64 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return value(key, string_t(default_value));
     }
 
+    // these two functions, in conjunction with value(const KeyType &, ValueType &&),
+    // resolve an ambiguity that would otherwise occur between the json_pointer and
+    // typename object_t::key_type & overloads
+    template < class ValueType, detail::enable_if_t <
+                   detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, ValueType>::value, int > = 0 >
+    typename std::decay<ValueType>::type value(const char* key, ValueType && default_value) const
+    {
+        return value(typename object_t::key_type(key), std::forward<ValueType>(default_value));
+    }
+
+    string_t value(const char* key, const char* default_value) const
+    {
+        return value(typename object_t::key_type(key), string_t(default_value));
+    }
+
+    /// @brief access specified object element with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    /// using std::is_convertible in a std::enable_if will fail when using explicit conversions
+    template < class KeyType, class ValueType, detail::enable_if_t <
+                   detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, ValueType>::value
+                   && detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int > = 0 >
+    typename std::decay<ValueType>::type value(KeyType && key, ValueType && default_value) const
+    {
+        // value only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            // if key is found, return value and given default value otherwise
+            const auto it = find(std::forward<KeyType>(key));
+            if (it != end())
+            {
+                return it->template get<typename std::decay<ValueType>::type>();
+            }
+
+            return std::forward<ValueType>(default_value);
+        }
+
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+    }
+
+    /// @brief access specified object element with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    /// overload for a default value of type const char*
+    template < class KeyType, detail::enable_if_t <
+                   !detail::is_json_pointer<KeyType>::value, int > = 0 >
+    string_t value(KeyType && key, const char* default_value) const
+    {
+        return value(std::forward<KeyType>(key), string_t(default_value));
+    }
+
     /// @brief access specified object element via JSON Pointer with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
-    template<class ValueType, typename std::enable_if<
-                 detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
+    template < class ValueType, detail::enable_if_t <
+                   detail::is_getable<basic_json_t, ValueType>::value, int> = 0 >
     ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
-        // at only works for objects
+        // value only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
             // if pointer resolves a value, return it or use default value
@@ -19677,8 +20405,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
     }
 
-    template<class ValueType, class BasicJsonType, typename std::enable_if<
-                 detail::is_getable<basic_json_t, ValueType>::value, int>::type = 0>
+    template < class ValueType, class BasicJsonType, detail::enable_if_t <
+                   detail::is_getable<basic_json_t, ValueType>::value, int> = 0 >
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const
     {
@@ -19736,10 +20464,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief remove element given an iterator
     /// @sa https://json.nlohmann.me/api/basic_json/erase/
-    template < class IteratorType, typename std::enable_if <
+    template < class IteratorType, detail::enable_if_t <
                    std::is_same<IteratorType, typename basic_json_t::iterator>::value ||
-                   std::is_same<IteratorType, typename basic_json_t::const_iterator>::value, int >::type
-               = 0 >
+                   std::is_same<IteratorType, typename basic_json_t::const_iterator>::value, int > = 0 >
     IteratorType erase(IteratorType pos)
     {
         // make sure iterator fits the current value
@@ -19807,10 +20534,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief remove elements given an iterator range
     /// @sa https://json.nlohmann.me/api/basic_json/erase/
-    template < class IteratorType, typename std::enable_if <
+    template < class IteratorType, detail::enable_if_t <
                    std::is_same<IteratorType, typename basic_json_t::iterator>::value ||
-                   std::is_same<IteratorType, typename basic_json_t::const_iterator>::value, int >::type
-               = 0 >
+                   std::is_same<IteratorType, typename basic_json_t::const_iterator>::value, int > = 0 >
     IteratorType erase(IteratorType first, IteratorType last)
     {
         // make sure iterator fits the current value
@@ -19879,17 +20605,57 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return result;
     }
 
+  private:
+    template < typename KeyType, detail::enable_if_t <
+                   detail::has_erase_with_key_type<basic_json_t, KeyType>::value, int > = 0 >
+    size_type erase_internal(KeyType && key)
+    {
+        // this erase only works for objects
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        {
+            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+        }
+
+        return m_value.object->erase(std::forward<KeyType>(key));
+    }
+
+    template < typename KeyType, detail::enable_if_t <
+                   !detail::has_erase_with_key_type<basic_json_t, KeyType>::value, int > = 0 >
+    size_type erase_internal(KeyType && key)
+    {
+        // this erase only works for objects
+        if (JSON_HEDLEY_UNLIKELY(!is_object()))
+        {
+            JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+        }
+
+        const auto it = m_value.object->find(std::forward<KeyType>(key));
+        if (it != m_value.object->end())
+        {
+            m_value.object->erase(it);
+            return 1;
+        }
+        return 0;
+    }
+
+  public:
+
     /// @brief remove element from a JSON object given a key
     /// @sa https://json.nlohmann.me/api/basic_json/erase/
     size_type erase(const typename object_t::key_type& key)
     {
-        // this erase only works for objects
-        if (JSON_HEDLEY_LIKELY(is_object()))
-        {
-            return m_value.object->erase(key);
-        }
+        // the indirection via erase_internal() is added to avoid making this
+        // function a template and thus de-rank it during overload resolution
+        return erase_internal(key);
+    }
 
-        JSON_THROW(type_error::create(307, detail::concat("cannot use erase() with ", type_name()), this));
+    /// @brief remove element from a JSON object given a key
+    /// @sa https://json.nlohmann.me/api/basic_json/erase/
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+    size_type erase(KeyType && key)
+    {
+        return erase_internal(std::forward<KeyType>(key));
     }
 
     /// @brief remove element from a JSON array given an index
@@ -19924,14 +20690,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
-    template<typename KeyT>
-    iterator find(KeyT&& key)
+    iterator find(const typename object_t::key_type& key)
     {
         auto result = end();
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(key);
         }
 
         return result;
@@ -19939,14 +20704,45 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief find an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/find/
-    template<typename KeyT>
-    const_iterator find(KeyT&& key) const
+    const_iterator find(const typename object_t::key_type& key) const
     {
         auto result = cend();
 
         if (is_object())
         {
-            result.m_it.object_iterator = m_value.object->find(std::forward<KeyT>(key));
+            result.m_it.object_iterator = m_value.object->find(key);
+        }
+
+        return result;
+    }
+
+    /// @brief find an element in a JSON object
+    /// @sa https://json.nlohmann.me/api/basic_json/find/
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+    iterator find(KeyType && key)
+    {
+        auto result = end();
+
+        if (is_object())
+        {
+            result.m_it.object_iterator = m_value.object->find(std::forward<KeyType>(key));
+        }
+
+        return result;
+    }
+
+    /// @brief find an element in a JSON object
+    /// @sa https://json.nlohmann.me/api/basic_json/find/
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+    const_iterator find(KeyType && key) const
+    {
+        auto result = cend();
+
+        if (is_object())
+        {
+            result.m_it.object_iterator = m_value.object->find(std::forward<KeyType>(key));
         }
 
         return result;
@@ -19954,20 +20750,36 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief returns the number of occurrences of a key in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/count/
-    template<typename KeyT>
-    size_type count(KeyT&& key) const
+    size_type count(const typename object_t::key_type& key) const
     {
         // return 0 for all nonobject types
-        return is_object() ? m_value.object->count(std::forward<KeyT>(key)) : 0;
+        return is_object() ? m_value.object->count(key) : 0;
+    }
+
+    /// @brief returns the number of occurrences of a key in a JSON object
+    /// @sa https://json.nlohmann.me/api/basic_json/count/
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+    size_type count(KeyType && key) const
+    {
+        // return 0 for all nonobject types
+        return is_object() ? m_value.object->count(std::forward<KeyType>(key)) : 0;
     }
 
     /// @brief check the existence of an element in a JSON object
     /// @sa https://json.nlohmann.me/api/basic_json/contains/
-    template < typename KeyT, typename std::enable_if <
-                   !detail::is_json_pointer<typename std::decay<KeyT>::type>::value, int >::type = 0 >
-    bool contains(KeyT && key) const
+    bool contains(const typename object_t::key_type& key) const
     {
-        return is_object() && m_value.object->find(std::forward<KeyT>(key)) != m_value.object->end();
+        return is_object() && m_value.object->find(key) != m_value.object->end();
+    }
+
+    /// @brief check the existence of an element in a JSON object
+    /// @sa https://json.nlohmann.me/api/basic_json/contains/
+    template<class KeyType, detail::enable_if_t<
+                 detail::is_usable_as_key_type<basic_json_t, KeyType>::value, int> = 0>
+    bool contains(KeyType && key) const
+    {
+        return is_object() && m_value.object->find(std::forward<KeyType>(key)) != m_value.object->end();
     }
 
     /// @brief check the existence of an element in a JSON object given a JSON pointer
@@ -21221,7 +22033,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::forward<InputType>(i));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
     /// @brief generate SAX events
@@ -21236,7 +22048,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         auto ia = detail::input_adapter(std::move(first), std::move(last));
         return format == input_format_t::json
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 
     /// @brief generate SAX events
@@ -21257,7 +22069,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
                ? parser(std::move(ia), nullptr, true, ignore_comments).sax_parse(sax, strict)
                // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia)).sax_parse(format, sax, strict);
+               : detail::binary_reader<basic_json, decltype(ia), SAX>(std::move(ia), format).sax_parse(format, sax, strict);
     }
 #ifndef JSON_NO_IO
     /// @brief deserialize from stream
@@ -21413,6 +22225,33 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         binary_writer<char>(o).write_ubjson(j, use_size, use_type);
     }
 
+    /// @brief create a BJData serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
+    static std::vector<std::uint8_t> to_bjdata(const basic_json& j,
+            const bool use_size = false,
+            const bool use_type = false)
+    {
+        std::vector<std::uint8_t> result;
+        to_bjdata(j, result, use_size, use_type);
+        return result;
+    }
+
+    /// @brief create a BJData serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
+    static void to_bjdata(const basic_json& j, detail::output_adapter<std::uint8_t> o,
+                          const bool use_size = false, const bool use_type = false)
+    {
+        binary_writer<std::uint8_t>(o).write_ubjson(j, use_size, use_type, true, true);
+    }
+
+    /// @brief create a BJData serialization of a given JSON value
+    /// @sa https://json.nlohmann.me/api/basic_json/to_bjdata/
+    static void to_bjdata(const basic_json& j, detail::output_adapter<char> o,
+                          const bool use_size = false, const bool use_type = false)
+    {
+        binary_writer<char>(o).write_ubjson(j, use_size, use_type, true, true);
+    }
+
     /// @brief create a BSON serialization of a given JSON value
     /// @sa https://json.nlohmann.me/api/basic_json/to_bson/
     static std::vector<std::uint8_t> to_bson(const basic_json& j)
@@ -21448,7 +22287,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21464,7 +22303,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21491,7 +22330,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::cbor).sax_parse(input_format_t::cbor, &sdp, strict, tag_handler);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21506,7 +22345,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21521,7 +22360,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21545,7 +22384,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::msgpack, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::msgpack).sax_parse(input_format_t::msgpack, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21560,7 +22399,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21575,7 +22414,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21599,9 +22438,63 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::ubjson, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::ubjson).sax_parse(input_format_t::ubjson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
+
+
+    /// @brief create a JSON value from an input in BJData format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bjdata/
+    template<typename InputType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bjdata(InputType&& i,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        auto ia = detail::input_adapter(std::forward<InputType>(i));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    /// @brief create a JSON value from an input in BJData format
+    /// @sa https://json.nlohmann.me/api/basic_json/from_bjdata/
+    template<typename IteratorType>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bjdata(IteratorType first, IteratorType last,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        auto ia = detail::input_adapter(std::move(first), std::move(last));
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
+    template<typename T>
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bjdata(const T* ptr, std::size_t len,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
+    {
+        return from_bjdata(ptr, ptr + len, strict, allow_exceptions);
+    }
+
+    JSON_HEDLEY_WARN_UNUSED_RESULT
+    static basic_json from_bjdata(detail::span_input_adapter&& i,
+                                  const bool strict = true,
+                                  const bool allow_exceptions = true)
+    {
+        basic_json result;
+        detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
+        auto ia = i.get();
+        // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bjdata).sax_parse(input_format_t::bjdata, &sdp, strict);
+        return res ? result : basic_json(value_t::discarded);
+    }
+
 
     /// @brief create a JSON value from an input in BSON format
     /// @sa https://json.nlohmann.me/api/basic_json/from_bson/
@@ -21614,7 +22507,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::forward<InputType>(i));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bson, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21629,7 +22522,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         basic_json result;
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = detail::input_adapter(std::move(first), std::move(last));
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bson, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
 
@@ -21653,7 +22546,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         detail::json_sax_dom_parser<basic_json> sdp(result, allow_exceptions);
         auto ia = i.get();
         // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-        const bool res = binary_reader<decltype(ia)>(std::move(ia)).sax_parse(input_format_t::bson, &sdp, strict);
+        const bool res = binary_reader<decltype(ia)>(std::move(ia), input_format_t::bson).sax_parse(input_format_t::bson, &sdp, strict);
         return res ? result : basic_json(value_t::discarded);
     }
     /// @}
@@ -21672,7 +22565,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_unchecked(this);
     }
 
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr)
     {
@@ -21686,7 +22579,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_unchecked(this);
     }
 
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference operator[](const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
@@ -22288,6 +23181,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef NLOHMANN_BASIC_JSON_TPL
 #undef JSON_EXPLICIT
 #undef NLOHMANN_CAN_CALL_STD_FUNC_IMPL
+#undef JSON_NO_UNIQUE_ADDRESS
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH
