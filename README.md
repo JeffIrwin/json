@@ -1,4 +1,4 @@
-[![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)](https://github.com/nlohmann/json/releases)
+[![JSON for Modern C++](docs/json.gif)](https://github.com/nlohmann/json/releases)
 
 [![Build Status](https://ci.appveyor.com/api/projects/status/1acb366xfyg3qybk/branch/develop?svg=true)](https://ci.appveyor.com/project/nlohmann/json)
 [![Ubuntu](https://github.com/nlohmann/json/workflows/Ubuntu/badge.svg)](https://github.com/nlohmann/json/actions?query=workflow%3AUbuntu)
@@ -54,7 +54,7 @@ There are myriads of [JSON](https://json.org) libraries out there, and each may 
 
 - **Trivial integration**. Our whole code consists of a single header file [`json.hpp`](https://github.com/nlohmann/json/blob/develop/single_include/nlohmann/json.hpp). That's it. No library, no subproject, no dependencies, no complex build system. The class is written in vanilla C++11. All in all, everything should require no adjustment of your compiler flags or project settings.
 
-- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/test/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
+- **Serious testing**. Our class is heavily [unit-tested](https://github.com/nlohmann/json/tree/develop/tests/src) and covers [100%](https://coveralls.io/r/nlohmann/json) of the code, including all exceptional behavior. Furthermore, we checked with [Valgrind](https://valgrind.org) and the [Clang Sanitizers](https://clang.llvm.org/docs/index.html) that there are no memory leaks. [Google OSS-Fuzz](https://github.com/google/oss-fuzz/tree/master/projects/json) additionally runs fuzz tests against all parsers 24/7, effectively executing billions of tests so far. To maintain high quality, the project is following the [Core Infrastructure Initiative (CII) best practices](https://bestpractices.coreinfrastructure.org/projects/289).
 
 Other aspects were not so important to us:
 
@@ -83,7 +83,7 @@ Thanks everyone!
 
 :question: If you have a **question**, please check if it is already answered in the [**FAQ**](https://json.nlohmann.me/home/faq/) or the [**Q&A**](https://github.com/nlohmann/json/discussions/categories/q-a) section. If not, please [**ask a new question**](https://github.com/nlohmann/json/discussions/new) there.
 
-:books: If you want to **learn more** about how to use the library, check out the rest of the [**README**](#examples), have a look at [**code examples**](https://github.com/nlohmann/json/tree/develop/doc/examples), or browse through the [**help pages**](https://json.nlohmann.me).
+:books: If you want to **learn more** about how to use the library, check out the rest of the [**README**](#examples), have a look at [**code examples**](https://github.com/nlohmann/json/tree/develop/docs/examples), or browse through the [**help pages**](https://json.nlohmann.me).
 
 :construction: If you want to understand the **API** better, check out the [**API Reference**](https://json.nlohmann.me/api/basic_json/).
 
@@ -93,7 +93,7 @@ There is also a [**docset**](https://github.com/Kapeli/Dash-User-Contributions/t
 
 ## Examples
 
-Beside the examples below, you may want to check the [documentation](https://json.nlohmann.me/) where each function contains a separate code example (e.g., check out [`emplace()`](https://json.nlohmann.me/api/basic_json/emplace/)). All [example files](https://github.com/nlohmann/json/tree/develop/doc/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/doc/examples/emplace.cpp)).
+Beside the examples below, you may want to check the [documentation](https://json.nlohmann.me/) where each function contains a separate code example (e.g., check out [`emplace()`](https://json.nlohmann.me/api/basic_json/emplace/)). All [example files](https://github.com/nlohmann/json/tree/develop/docs/examples) can be compiled and executed on their own (e.g., file [emplace.cpp](https://github.com/nlohmann/json/blob/develop/docs/examples/emplace.cpp)).
 
 ### JSON as first-class data type
 
@@ -857,7 +857,7 @@ namespace nlohmann {
 
 #### Can I write my own serializer? (Advanced use)
 
-Yes. You might want to take a look at [`unit-udt.cpp`](https://github.com/nlohmann/json/blob/develop/test/src/unit-udt.cpp) in the test suite, to see a few examples.
+Yes. You might want to take a look at [`unit-udt.cpp`](https://github.com/nlohmann/json/blob/develop/tests/src/unit-udt.cpp) in the test suite, to see a few examples.
 
 If you write your own serializer, you'll need to do a few things:
 
@@ -1083,18 +1083,6 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Apple Clang 12.0.0 (clang-1200.0.32.27); Xcode 12.2                                                    | macOS 10.15.7      | GitHub Actions |
 | Apple Clang 12.0.0 (clang-1200.0.32.28); Xcode 12.3                                                    | macOS 10.15.7      | GitHub Actions |
 | Apple Clang 12.0.0 (clang-1200.0.32.29); Xcode 12.4                                                    | macOS 10.15.7      | GitHub Actions |
-| GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 4.9.3 (Ubuntu 4.9.3-13ubuntu2)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 5.4.0 (Ubuntu 5.4.0-6ubuntu1~16.04.12)                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 6.4.0 (Ubuntu 6.4.0-17ubuntu1)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 7.5.0 (Ubuntu 7.5.0-6ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 8.1.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
-| GCC 8.1.0 (i686-posix-dwarf-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
-| GCC 8.4.0 (Ubuntu 8.4.0-3ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)                                                               | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 10.2.0 (Ubuntu 10.2.0-5ubuntu1~20.04)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Drone CI       |
-| GCC 12.0.0 20211219 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.5.2 (3.5.2-3ubuntu1)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.6.2 (3.6.2-3ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 3.7.1 (3.7.1-2ubuntu2)                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
@@ -1115,6 +1103,19 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Clang 13.0.1 (13.0.1-++20211015123032+cf15ccdeb6d5-1exp120211015003613.5)                              | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 14.0.0 (14.0.0-++20211221052852+55c71c9eac9b-1exp120211221172954.95)                             | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 15.0.0 (15.0.0-++20220403052648+896770c9a92e-1~exp1~20220403172744.209)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 4.9.3 (Ubuntu 4.9.3-13ubuntu2)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 5.4.0 (Ubuntu 5.4.0-6ubuntu1~16.04.12)                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 6.4.0 (Ubuntu 6.4.0-17ubuntu1)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 7.5.0 (Ubuntu 7.5.0-6ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 8.1.0 (i686-posix-dwarf-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
+| GCC 8.1.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
+| GCC 8.4.0 (Ubuntu 8.4.0-3ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 9.3.0 (Ubuntu 9.3.0-17ubuntu1~20.04)                                                               | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 10.2.0 (Ubuntu 10.2.0-5ubuntu1~20.04)                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Drone CI       |
+| GCC 12.0.0 20211219 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Intel C++ Compiler 2021.5.0.20211109                                                                   | Ubuntu 20.04.3 LTS | GitHub Actions |
 | NVCC 11.0.221                                                                                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)                            | Windows-6.3.9600   | AppVeyor       |
 | Visual Studio 15 2017 MSVC 19.16.27035.0 (Build Engine version 15.9.21+g9802d43bc3 for .NET Framework) | Windows-10.0.14393 | AppVeyor       |
@@ -1329,7 +1330,7 @@ Only if your request would contain confidential information, please [send me an 
 
 I deeply appreciate the help of the following people.
 
-<img src="https://raw.githubusercontent.com/nlohmann/json/develop/doc/avatars.png" align="right">
+<img src="https://raw.githubusercontent.com/nlohmann/json/develop/docs/avatars.png" align="right">
 
 - [Teemperor](https://github.com/Teemperor) implemented CMake support and lcov integration, realized escape and Unicode handling in the string parser, and fixed the JSON serialization.
 - [elliotgoodrich](https://github.com/elliotgoodrich) fixed an issue with double deletion in the iterator classes.
