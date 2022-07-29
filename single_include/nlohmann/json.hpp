@@ -3651,8 +3651,10 @@ struct is_constructible_string_type
 #endif
 
     static constexpr auto value =
-        is_constructible<laundered_type,
-        typename BasicJsonType::string_t>::value;
+        conjunction <
+        is_constructible<laundered_type, typename BasicJsonType::string_t>,
+        is_detected_exact<typename BasicJsonType::string_t::value_type,
+        value_type_t, laundered_type >>::value;
 };
 
 template<typename BasicJsonType, typename CompatibleArrayType, typename = void>
@@ -4478,6 +4480,7 @@ template <
     typename BasicJsonType, typename StringType,
     enable_if_t <
         std::is_assignable<StringType&, const typename BasicJsonType::string_t>::value
+        && is_detected_exact<typename BasicJsonType::string_t::value_type, value_type_t, StringType>::value
         && !std::is_same<typename BasicJsonType::string_t, StringType>::value
         && !is_json_ref<StringType>::value, int > = 0 >
 inline void from_json(const BasicJsonType& j, StringType& s)
@@ -13455,6 +13458,9 @@ class json_reverse_iterator : public std::reverse_iterator<Base>
 #include <cctype> // isdigit
 #include <cerrno> // errno, ERANGE
 #include <cstdlib> // strtoull
+#ifndef JSON_NO_IO
+    #include <iosfwd> // ostream
+#endif  // JSON_NO_IO
 #include <limits> // max
 #include <numeric> // accumulate
 #include <string> // string
@@ -13523,10 +13529,21 @@ class json_pointer
 
     /// @brief return a string representation of the JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_string/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.0, to_string())
     operator string_t() const
     {
         return to_string();
     }
+
+#ifndef JSON_NO_IO
+    /// @brief write string representation of the JSON pointer to stream
+    /// @sa https://json.nlohmann.me/api/basic_json/operator_ltlt/
+    friend std::ostream& operator<<(std::ostream& o, const json_pointer& ptr)
+    {
+        o << ptr.to_string();
+        return o;
+    }
+#endif
 
     /// @brief append another JSON pointer at the end of this JSON pointer
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_slasheq/
@@ -22274,11 +22291,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for arrays
         if (JSON_HEDLEY_LIKELY(is_array()))
         {
-            std::swap(*(m_value.array), other);
+            using std::swap;
+            swap(*(m_value.array), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(array_t&) with ", type_name()), this));
         }
     }
 
@@ -22289,11 +22307,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
         {
-            std::swap(*(m_value.object), other);
+            using std::swap;
+            swap(*(m_value.object), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(object_t&) with ", type_name()), this));
         }
     }
 
@@ -22304,11 +22323,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_string()))
         {
-            std::swap(*(m_value.string), other);
+            using std::swap;
+            swap(*(m_value.string), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(string_t&) with ", type_name()), this));
         }
     }
 
@@ -22319,11 +22339,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))
         {
-            std::swap(*(m_value.binary), other);
+            using std::swap;
+            swap(*(m_value.binary), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t&) with ", type_name()), this));
         }
     }
 
@@ -22334,11 +22355,12 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         // swap only works for strings
         if (JSON_HEDLEY_LIKELY(is_binary()))
         {
-            std::swap(*(m_value.binary), other);
+            using std::swap;
+            swap(*(m_value.binary), other);
         }
         else
         {
-            JSON_THROW(type_error::create(310, detail::concat("cannot use swap() with ", type_name()), this));
+            JSON_THROW(type_error::create(310, detail::concat("cannot use swap(binary_t::container_type&) with ", type_name()), this));
         }
     }
 
