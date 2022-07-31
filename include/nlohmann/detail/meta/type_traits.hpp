@@ -13,17 +13,15 @@
 #include <utility> // declval
 #include <tuple> // tuple
 
-#include <nlohmann/detail/macro_scope.hpp>
-
 #include <nlohmann/detail/iterators/iterator_traits.hpp>
+#include <nlohmann/detail/macro_scope.hpp>
 #include <nlohmann/detail/meta/call_std/begin.hpp>
 #include <nlohmann/detail/meta/call_std/end.hpp>
 #include <nlohmann/detail/meta/cpp_future.hpp>
 #include <nlohmann/detail/meta/detected.hpp>
 #include <nlohmann/json_fwd.hpp>
 
-namespace nlohmann
-{
+NLOHMANN_JSON_NAMESPACE_BEGIN
 /*!
 @brief detail namespace with internal helper functions
 
@@ -34,6 +32,7 @@ implementations of some @ref basic_json methods, and meta-programming helpers.
 */
 namespace detail
 {
+
 /////////////
 // helpers //
 /////////////
@@ -620,7 +619,7 @@ struct value_in_range_of_impl2<OfType, T, false, false>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -630,7 +629,7 @@ struct value_in_range_of_impl2<OfType, T, true, false>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -640,7 +639,7 @@ struct value_in_range_of_impl2<OfType, T, false, true>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return val >= 0 && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return val >= 0 && static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -651,8 +650,8 @@ struct value_in_range_of_impl2<OfType, T, true, true>
     static constexpr bool test(T val)
     {
         using CommonType = typename std::common_type<OfType, T>::type;
-        return static_cast<CommonType>(val) >= static_cast<CommonType>(std::numeric_limits<OfType>::min())
-               && static_cast<CommonType>(val) <= static_cast<CommonType>(std::numeric_limits<OfType>::max());
+        return static_cast<CommonType>(val) >= static_cast<CommonType>((std::numeric_limits<OfType>::min)())
+               && static_cast<CommonType>(val) <= static_cast<CommonType>((std::numeric_limits<OfType>::max)());
     }
 };
 
@@ -686,4 +685,4 @@ inline constexpr bool value_in_range_of(T val)
 }
 
 }  // namespace detail
-}  // namespace nlohmann
+NLOHMANN_JSON_NAMESPACE_END
