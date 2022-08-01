@@ -46,6 +46,14 @@
 #include <utility>
 
 // #include <nlohmann/detail/abi_macros.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.10.5
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 // This file contains all macro definitions affecting or depending on the ABI
@@ -2784,6 +2792,10 @@ JSON_HEDLEY_DIAGNOSTIC_POP
     #define JSON_DISABLE_ENUM_SERIALIZATION 0
 #endif
 
+#ifndef JSON_USE_GLOBAL_UDLS
+    #define JSON_USE_GLOBAL_UDLS 0
+#endif
+
 #if JSON_HAS_THREE_WAY_COMPARISON
     #include <compare> // partial_ordering
 #endif
@@ -4457,6 +4469,14 @@ template <class T> struct identity_tag {};
 NLOHMANN_JSON_NAMESPACE_END
 
 // #include <nlohmann/detail/meta/std_fs.hpp>
+//     __ _____ _____ _____
+//  __|  |   __|     |   | |  JSON for Modern C++
+// |  |  |__   |  |  | | | |  version 3.10.5
+// |_____|_____|_____|_|___|  https://github.com/nlohmann/json
+//
+// SPDX-FileCopyrightText: 2013-2022 Niels Lohmann <https://nlohmann.me>
+// SPDX-License-Identifier: MIT
+
 
 
 // #include <nlohmann/detail/macro_scope.hpp>
@@ -24023,6 +24043,29 @@ std::string to_string(const NLOHMANN_BASIC_JSON_TPL& j)
     return j.dump();
 }
 
+inline namespace literals
+{
+inline namespace json_literals
+{
+
+/// @brief user-defined string literal for JSON values
+/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
+JSON_HEDLEY_NON_NULL(1)
+inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+{
+    return nlohmann::json::parse(s, s + n);
+}
+
+/// @brief user-defined string literal for JSON pointer
+/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json_pointer/
+JSON_HEDLEY_NON_NULL(1)
+inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+{
+    return nlohmann::json::json_pointer(std::string(s, n));
+}
+
+}  // namespace json_literals
+}  // namespace literals
 NLOHMANN_JSON_NAMESPACE_END
 
 ///////////////////////
@@ -24079,21 +24122,9 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 
 }  // namespace std
 
-/// @brief user-defined string literal for JSON values
-/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
-JSON_HEDLEY_NON_NULL(1)
-inline nlohmann::json operator "" _json(const char* s, std::size_t n)
-{
-    return nlohmann::json::parse(s, s + n);
-}
-
-/// @brief user-defined string literal for JSON pointer
-/// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json_pointer/
-JSON_HEDLEY_NON_NULL(1)
-inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
-{
-    return nlohmann::json::json_pointer(std::string(s, n));
-}
+#if JSON_USE_GLOBAL_UDLS
+    using namespace nlohmann::literals::json_literals; // NOLINT(build/namespaces_literals)
+#endif
 
 // #include <nlohmann/detail/macro_unscope.hpp>
 //     __ _____ _____ _____
@@ -24123,6 +24154,7 @@ inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std
 #undef JSON_INLINE_VARIABLE
 #undef JSON_NO_UNIQUE_ADDRESS
 #undef JSON_DISABLE_ENUM_SERIALIZATION
+#undef JSON_USE_GLOBAL_UDLS
 
 #ifndef JSON_TEST_KEEP_MACROS
     #undef JSON_CATCH

@@ -1,6 +1,8 @@
 #include <iostream>
+#include <string_view>
 #include <nlohmann/json.hpp>
 
+using namespace std::string_view_literals;
 using json = nlohmann::json;
 
 int main()
@@ -17,12 +19,12 @@ int main()
     };
 
     // access existing values
-    int v_integer = j.value("/integer"_json_pointer, 0);
-    double v_floating = j.value("/floating"_json_pointer, 47.11);
+    int v_integer = j.value("integer"sv, 0);
+    double v_floating = j.value("floating"sv, 47.11);
 
     // access nonexisting values and rely on default value
-    std::string v_string = j.value("/nonexisting"_json_pointer, "oops");
-    bool v_boolean = j.value("/nonexisting"_json_pointer, false);
+    std::string v_string = j.value("nonexisting"sv, "oops");
+    bool v_boolean = j.value("nonexisting"sv, false);
 
     // output values
     std::cout << std::boolalpha << v_integer << " " << v_floating

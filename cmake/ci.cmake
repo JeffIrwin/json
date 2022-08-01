@@ -30,7 +30,7 @@ execute_process(COMMAND ${CPPCHECK_TOOL} --version OUTPUT_VARIABLE CPPCHECK_TOOL
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" CPPCHECK_TOOL_VERSION "${CPPCHECK_TOOL_VERSION}")
 message(STATUS "🔖 Cppcheck ${CPPCHECK_TOOL_VERSION} (${CPPCHECK_TOOL})")
 
-find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-11)
+find_program(GCC_TOOL NAMES g++-latest g++-HEAD g++-11 g++-10)
 execute_process(COMMAND ${GCC_TOOL} --version OUTPUT_VARIABLE GCC_TOOL_VERSION ERROR_VARIABLE GCC_TOOL_VERSION)
 string(REGEX MATCH "[0-9]+(\\.[0-9]+)+" GCC_TOOL_VERSION "${GCC_TOOL_VERSION}")
 message(STATUS "🔖 GCC ${GCC_TOOL_VERSION} (${GCC_TOOL})")
@@ -518,6 +518,20 @@ add_custom_target(ci_test_legacycomparison
 )
 
 ###############################################################################
+# Disable global UDLs.
+###############################################################################
+
+add_custom_target(ci_test_noglobaludls
+    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_UseGlobalUDLs=OFF
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noglobaludls
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_noglobaludls
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_noglobaludls && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with global UDLs disabled"
+)
+
+###############################################################################
 # Coverage.
 ###############################################################################
 
@@ -838,7 +852,7 @@ endfunction()
 ci_get_cmake(3.1.0 CMAKE_3_1_0_BINARY)
 ci_get_cmake(3.13.0 CMAKE_3_13_0_BINARY)
 
-set(JSON_CMAKE_FLAGS_3_1_0 JSON_Diagnostics JSON_ImplicitConversions JSON_DisableEnumSerialization 
+set(JSON_CMAKE_FLAGS_3_1_0 JSON_Diagnostics JSON_GlobalUDLs JSON_ImplicitConversions JSON_DisableEnumSerialization
     JSON_LegacyDiscardedValueComparison JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind)
 set(JSON_CMAKE_FLAGS_3_13_0 JSON_BuildTests)
 
@@ -939,7 +953,7 @@ add_custom_target(ci_icpc
 ###############################################################################
 
 add_custom_target(ci_test_documentation
-    COMMAND make check_output_portable -j8
+    COMMAND make CXX="${GCC_TOOL}" check_output_portable -j8
     WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs
     COMMENT "Check that all examples compile and create the desired output"
 )
