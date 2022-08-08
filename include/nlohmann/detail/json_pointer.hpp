@@ -847,7 +847,7 @@ class json_pointer
     }
 
   public:
-#ifdef JSON_HAS_CPP_20
+#if JSON_HAS_THREE_WAY_COMPARISON
     /// @brief compares two JSON pointers for equality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
     template<typename RefStringTypeRhs>
@@ -858,9 +858,17 @@ class json_pointer
 
     /// @brief compares JSON pointer and string for equality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer))
     bool operator==(const string_t& rhs) const
     {
         return *this == json_pointer(rhs);
+    }
+
+    /// @brief 3-way compares two JSON pointers
+    template<typename RefStringTypeRhs>
+    std::strong_ordering operator<=>(const json_pointer<RefStringTypeRhs>& rhs) const noexcept // *NOPAD*
+    {
+        return  reference_tokens <=> rhs.reference_tokens; // *NOPAD*
     }
 #else
     /// @brief compares two JSON pointers for equality
@@ -904,6 +912,12 @@ class json_pointer
     // NOLINTNEXTLINE(readability-redundant-declaration)
     friend bool operator!=(const StringType& lhs,
                            const json_pointer<RefStringTypeRhs>& rhs);
+
+    /// @brief compares two JSON pointer for less-than
+    template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
+                          const json_pointer<RefStringTypeRhs>& rhs) noexcept;
 #endif
 
   private:
@@ -911,7 +925,7 @@ class json_pointer
     std::vector<string_t> reference_tokens;
 };
 
-#ifndef JSON_HAS_CPP_20
+#if !JSON_HAS_THREE_WAY_COMPARISON
 // functions cannot be defined inside class due to ODR violations
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
 inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
@@ -922,6 +936,7 @@ inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeLhs,
          typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
 inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
                        const StringType& rhs)
 {
@@ -930,6 +945,7 @@ inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeRhs,
          typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
 inline bool operator==(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
 {
@@ -945,6 +961,7 @@ inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeLhs,
          typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
 inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
                        const StringType& rhs)
 {
@@ -953,10 +970,18 @@ inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeRhs,
          typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
 inline bool operator!=(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
 {
     return !(lhs == rhs);
+}
+
+template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
+                      const json_pointer<RefStringTypeRhs>& rhs) noexcept
+{
+    return lhs.reference_tokens < rhs.reference_tokens;
 }
 #endif
 

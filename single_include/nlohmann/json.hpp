@@ -4059,6 +4059,58 @@ inline constexpr bool value_in_range_of(T val)
     return value_in_range_of_impl1<OfType, T>::test(val);
 }
 
+template<bool Value>
+using bool_constant = std::integral_constant<bool, Value>;
+
+///////////////////////////////////////////////////////////////////////////////
+// is_c_string
+///////////////////////////////////////////////////////////////////////////////
+
+namespace impl
+{
+
+template<typename T>
+inline constexpr bool is_c_string()
+{
+    using TUnExt = typename std::remove_extent<T>::type;
+    using TUnCVExt = typename std::remove_cv<TUnExt>::type;
+    using TUnPtr = typename std::remove_pointer<T>::type;
+    using TUnCVPtr = typename std::remove_cv<TUnPtr>::type;
+    return
+        (std::is_array<T>::value && std::is_same<TUnCVExt, char>::value)
+        || (std::is_pointer<T>::value && std::is_same<TUnCVPtr, char>::value);
+}
+
+}  // namespace impl
+
+// checks whether T is a [cv] char */[cv] char[] C string
+template<typename T>
+struct is_c_string : bool_constant<impl::is_c_string<T>()> {};
+
+template<typename T>
+using is_c_string_uncvref = is_c_string<uncvref_t<T>>;
+
+///////////////////////////////////////////////////////////////////////////////
+// is_transparent
+///////////////////////////////////////////////////////////////////////////////
+
+namespace impl
+{
+
+template<typename T>
+inline constexpr bool is_transparent()
+{
+    return is_detected<detect_is_transparent, T>::value;
+}
+
+}  // namespace impl
+
+// checks whether T has a member named is_transparent
+template<typename T>
+struct is_transparent : bool_constant<impl::is_transparent<T>()> {};
+
+///////////////////////////////////////////////////////////////////////////////
+
 }  // namespace detail
 NLOHMANN_JSON_NAMESPACE_END
 
@@ -5500,9 +5552,15 @@ inline void to_json(BasicJsonType& j, T b) noexcept
     external_constructor<value_t::boolean>::construct(j, b);
 }
 
-template<typename BasicJsonType,
-         enable_if_t<std::is_convertible<const std::vector<bool>::reference&, typename BasicJsonType::boolean_t>::value, int> = 0>
-inline void to_json(BasicJsonType& j, const std::vector<bool>::reference& b) noexcept
+template < typename BasicJsonType, typename BoolRef,
+           enable_if_t <
+               ((std::is_same<std::vector<bool>::reference, BoolRef>::value
+                 && !std::is_same <std::vector<bool>::reference, typename BasicJsonType::boolean_t&>::value)
+                || (std::is_same<std::vector<bool>::const_reference, BoolRef>::value
+                    && !std::is_same <detail::uncvref_t<std::vector<bool>::const_reference>,
+                                      typename BasicJsonType::boolean_t >::value))
+               && std::is_convertible<const BoolRef&, typename BasicJsonType::boolean_t>::value, int > = 0 >
+inline void to_json(BasicJsonType& j, const BoolRef& b) noexcept
 {
     external_constructor<value_t::boolean>::construct(j, static_cast<typename BasicJsonType::boolean_t>(b));
 }
@@ -14449,7 +14507,7 @@ class json_pointer
     }
 
   public:
-#ifdef JSON_HAS_CPP_20
+#if JSON_HAS_THREE_WAY_COMPARISON
     /// @brief compares two JSON pointers for equality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
     template<typename RefStringTypeRhs>
@@ -14460,9 +14518,17 @@ class json_pointer
 
     /// @brief compares JSON pointer and string for equality
     /// @sa https://json.nlohmann.me/api/json_pointer/operator_eq/
+    JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer))
     bool operator==(const string_t& rhs) const
     {
         return *this == json_pointer(rhs);
+    }
+
+    /// @brief 3-way compares two JSON pointers
+    template<typename RefStringTypeRhs>
+    std::strong_ordering operator<=>(const json_pointer<RefStringTypeRhs>& rhs) const noexcept // *NOPAD*
+    {
+        return  reference_tokens <=> rhs.reference_tokens; // *NOPAD*
     }
 #else
     /// @brief compares two JSON pointers for equality
@@ -14506,6 +14572,12 @@ class json_pointer
     // NOLINTNEXTLINE(readability-redundant-declaration)
     friend bool operator!=(const StringType& lhs,
                            const json_pointer<RefStringTypeRhs>& rhs);
+
+    /// @brief compares two JSON pointer for less-than
+    template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+    // NOLINTNEXTLINE(readability-redundant-declaration)
+    friend bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
+                          const json_pointer<RefStringTypeRhs>& rhs) noexcept;
 #endif
 
   private:
@@ -14513,7 +14585,7 @@ class json_pointer
     std::vector<string_t> reference_tokens;
 };
 
-#ifndef JSON_HAS_CPP_20
+#if !JSON_HAS_THREE_WAY_COMPARISON
 // functions cannot be defined inside class due to ODR violations
 template<typename RefStringTypeLhs, typename RefStringTypeRhs>
 inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
@@ -14524,6 +14596,7 @@ inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeLhs,
          typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
 inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
                        const StringType& rhs)
 {
@@ -14532,6 +14605,7 @@ inline bool operator==(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeRhs,
          typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator==(json_pointer, json_pointer))
 inline bool operator==(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
 {
@@ -14547,6 +14621,7 @@ inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeLhs,
          typename StringType = typename json_pointer<RefStringTypeLhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
 inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
                        const StringType& rhs)
 {
@@ -14555,10 +14630,18 @@ inline bool operator!=(const json_pointer<RefStringTypeLhs>& lhs,
 
 template<typename RefStringTypeRhs,
          typename StringType = typename json_pointer<RefStringTypeRhs>::string_t>
+JSON_HEDLEY_DEPRECATED_FOR(3.11.2, operator!=(json_pointer, json_pointer))
 inline bool operator!=(const StringType& lhs,
                        const json_pointer<RefStringTypeRhs>& rhs)
 {
     return !(lhs == rhs);
+}
+
+template<typename RefStringTypeLhs, typename RefStringTypeRhs>
+inline bool operator<(const json_pointer<RefStringTypeLhs>& lhs,
+                      const json_pointer<RefStringTypeRhs>& rhs) noexcept
+{
+    return lhs.reference_tokens < rhs.reference_tokens;
 }
 #endif
 
@@ -21268,14 +21351,24 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(305, detail::concat("cannot use operator[] with a string argument with ", type_name()), this));
     }
 
+  private:
+    template<typename KeyType>
+    using is_comparable_with_object_key = detail::is_comparable <
+        object_comparator_t, const typename object_t::key_type&, KeyType >;
+
+    template<typename ValueType>
+    using value_return_type = std::conditional <
+        detail::is_c_string_uncvref<ValueType>::value,
+        string_t, typename std::decay<ValueType>::type >;
+
+  public:
     /// @brief access specified object element with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
-    // this is the value(const typename object_t::key_type&) overload
-    template < class KeyType, class ValueType, detail::enable_if_t <
-                   std::is_same<KeyType, typename object_t::key_type>::value
+    template < class ValueType, detail::enable_if_t <
+                   !detail::is_transparent<object_comparator_t>::value
                    && detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value, int > = 0 >
-    typename std::decay<ValueType>::type value(const KeyType& key, ValueType && default_value) const
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ValueType value(const typename object_t::key_type& key, const ValueType& default_value) const
     {
         // value only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21284,7 +21377,32 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const auto it = find(key);
             if (it != end())
             {
-                return it->template get<typename std::decay<ValueType>::type>();
+                return it->template get<ValueType>();
+            }
+
+            return default_value;
+        }
+
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+    }
+
+    /// @brief access specified object element with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    template < class ValueType, class ReturnType = typename value_return_type<ValueType>::type,
+               detail::enable_if_t <
+                   !detail::is_transparent<object_comparator_t>::value
+                   && detail::is_getable<basic_json_t, ReturnType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ReturnType value(const typename object_t::key_type& key, ValueType && default_value) const
+    {
+        // value only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            // if key is found, return value and given default value otherwise
+            const auto it = find(key);
+            if (it != end())
+            {
+                return it->template get<ReturnType>();
             }
 
             return std::forward<ValueType>(default_value);
@@ -21295,36 +21413,13 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
 
     /// @brief access specified object element with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// overload for a default value of type const char*
-    string_t value(const typename object_t::key_type& key, const char* default_value) const
-    {
-        return value(key, string_t(default_value));
-    }
-
-    // these two functions, in conjunction with value(const KeyType &, ValueType &&),
-    // resolve an ambiguity that would otherwise occur between the json_pointer and
-    // typename object_t::key_type & overloads
-    template < class ValueType, detail::enable_if_t <
-                   detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value, int > = 0 >
-    typename std::decay<ValueType>::type value(const char* key, ValueType && default_value) const
-    {
-        return value(typename object_t::key_type(key), std::forward<ValueType>(default_value));
-    }
-
-    string_t value(const char* key, const char* default_value) const
-    {
-        return value(typename object_t::key_type(key), string_t(default_value));
-    }
-
-    /// @brief access specified object element with default value
-    /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// using std::is_convertible in a std::enable_if will fail when using explicit conversions
-    template < class KeyType, class ValueType, detail::enable_if_t <
-                   detail::is_getable<basic_json_t, ValueType>::value
-                   && !std::is_same<value_t, ValueType>::value
-                   && detail::is_usable_as_basic_json_key_type<basic_json_t, KeyType>::value, int > = 0 >
-    typename std::decay<ValueType>::type value(KeyType && key, ValueType && default_value) const
+    template < class ValueType, class KeyType, detail::enable_if_t <
+                   detail::is_transparent<object_comparator_t>::value
+                   && !detail::is_json_pointer<KeyType>::value
+                   && is_comparable_with_object_key<KeyType>::value
+                   && detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ValueType value(KeyType && key, const ValueType& default_value) const
     {
         // value only works for objects
         if (JSON_HEDLEY_LIKELY(is_object()))
@@ -21333,7 +21428,34 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
             const auto it = find(std::forward<KeyType>(key));
             if (it != end())
             {
-                return it->template get<typename std::decay<ValueType>::type>();
+                return it->template get<ValueType>();
+            }
+
+            return default_value;
+        }
+
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+    }
+
+    /// @brief access specified object element via JSON Pointer with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    template < class ValueType, class KeyType, class ReturnType = typename value_return_type<ValueType>::type,
+               detail::enable_if_t <
+                   detail::is_transparent<object_comparator_t>::value
+                   && !detail::is_json_pointer<KeyType>::value
+                   && is_comparable_with_object_key<KeyType>::value
+                   && detail::is_getable<basic_json_t, ReturnType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ReturnType value(KeyType && key, ValueType && default_value) const
+    {
+        // value only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            // if key is found, return value and given default value otherwise
+            const auto it = find(std::forward<KeyType>(key));
+            if (it != end())
+            {
+                return it->template get<ReturnType>();
             }
 
             return std::forward<ValueType>(default_value);
@@ -21342,20 +21464,11 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
     }
 
-    /// @brief access specified object element with default value
-    /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// overload for a default value of type const char*
-    template < class KeyType, detail::enable_if_t <
-                   !detail::is_json_pointer<KeyType>::value, int > = 0 >
-    string_t value(KeyType && key, const char* default_value) const
-    {
-        return value(std::forward<KeyType>(key), string_t(default_value));
-    }
-
     /// @brief access specified object element via JSON Pointer with default value
     /// @sa https://json.nlohmann.me/api/basic_json/value/
     template < class ValueType, detail::enable_if_t <
-                   detail::is_getable<basic_json_t, ValueType>::value, int> = 0 >
+                   detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     ValueType value(const json_pointer& ptr, const ValueType& default_value) const
     {
         // value only works for objects
@@ -21375,29 +21488,50 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
     }
 
+    /// @brief access specified object element via JSON Pointer with default value
+    /// @sa https://json.nlohmann.me/api/basic_json/value/
+    template < class ValueType, class ReturnType = typename value_return_type<ValueType>::type,
+               detail::enable_if_t <
+                   detail::is_getable<basic_json_t, ReturnType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
+    ReturnType value(const json_pointer& ptr, ValueType && default_value) const
+    {
+        // value only works for objects
+        if (JSON_HEDLEY_LIKELY(is_object()))
+        {
+            // if pointer resolves a value, return it or use default value
+            JSON_TRY
+            {
+                return ptr.get_checked(this).template get<ReturnType>();
+            }
+            JSON_INTERNAL_CATCH (out_of_range&)
+            {
+                return std::forward<ValueType>(default_value);
+            }
+        }
+
+        JSON_THROW(type_error::create(306, detail::concat("cannot use value() with ", type_name()), this));
+    }
+
     template < class ValueType, class BasicJsonType, detail::enable_if_t <
-                   detail::is_getable<basic_json_t, ValueType>::value, int> = 0 >
+                   detail::is_basic_json<BasicJsonType>::value
+                   && detail::is_getable<basic_json_t, ValueType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     ValueType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, const ValueType& default_value) const
     {
         return value(ptr.convert(), default_value);
     }
 
-    /// @brief access specified object element via JSON Pointer with default value
-    /// @sa https://json.nlohmann.me/api/basic_json/value/
-    /// overload for a default value of type const char*
-    JSON_HEDLEY_NON_NULL(3)
-    string_t value(const json_pointer& ptr, const char* default_value) const
-    {
-        return value(ptr, string_t(default_value));
-    }
-
-    template<typename BasicJsonType>
+    template < class ValueType, class BasicJsonType, class ReturnType = typename value_return_type<ValueType>::type,
+               detail::enable_if_t <
+                   detail::is_basic_json<BasicJsonType>::value
+                   && detail::is_getable<basic_json_t, ReturnType>::value
+                   && !std::is_same<value_t, detail::uncvref_t<ValueType>>::value, int > = 0 >
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
-    JSON_HEDLEY_NON_NULL(3)
-    string_t value(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr, const char* default_value) const
+    ReturnType value(const ::nlohmann::json_pointer<BasicJsonType>& ptr, ValueType && default_value) const
     {
-        return value(ptr.convert(), default_value);
+        return value(ptr.convert(), std::forward<ValueType>(default_value));
     }
 
     /// @brief access the first element
@@ -21759,9 +21893,9 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.contains(this);
     }
 
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
-    bool contains(const typename ::nlohmann::json_pointer<BasicJsonType> ptr) const
+    bool contains(const typename ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
         return ptr.contains(this);
     }
@@ -23640,7 +23774,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr)
     {
@@ -23654,7 +23788,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         return ptr.get_checked(this);
     }
 
-    template<typename BasicJsonType>
+    template<typename BasicJsonType, detail::enable_if_t<detail::is_basic_json<BasicJsonType>::value, int> = 0>
     JSON_HEDLEY_DEPRECATED_FOR(3.11.0, basic_json::json_pointer or nlohmann::json_pointer<basic_json::string_t>) // NOLINT(readability/alt_tokens)
     const_reference at(const ::nlohmann::json_pointer<BasicJsonType>& ptr) const
     {
