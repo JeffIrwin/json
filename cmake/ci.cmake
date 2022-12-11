@@ -466,7 +466,7 @@ endforeach()
 ###############################################################################
 
 add_custom_target(ci_test_noexceptions
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
     -DJSON_BuildTests=ON -DCMAKE_CXX_FLAGS=-DJSON_NOEXCEPTION -DDOCTEST_TEST_FILTER=--no-throw
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noexceptions
@@ -480,7 +480,7 @@ add_custom_target(ci_test_noexceptions
 ###############################################################################
 
 add_custom_target(ci_test_noimplicitconversions
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
     -DJSON_BuildTests=ON -DJSON_ImplicitConversions=OFF
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_noimplicitconversions
@@ -494,7 +494,7 @@ add_custom_target(ci_test_noimplicitconversions
 ###############################################################################
 
 add_custom_target(ci_test_diagnostics
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
     -DJSON_BuildTests=ON -DJSON_Diagnostics=ON
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_diagnostics
@@ -508,7 +508,7 @@ add_custom_target(ci_test_diagnostics
 ###############################################################################
 
 add_custom_target(ci_test_legacycomparison
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
     -DJSON_BuildTests=ON -DJSON_LegacyDiscardedValueComparison=ON
     -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_legacycomparison
@@ -522,7 +522,7 @@ add_custom_target(ci_test_legacycomparison
 ###############################################################################
 
 add_custom_target(ci_test_noglobaludls
-    COMMAND CXX=${CLANG_TOOL} ${CMAKE_COMMAND}
+    COMMAND ${CMAKE_COMMAND}
     -DCMAKE_BUILD_TYPE=Debug -GNinja
     -DJSON_BuildTests=ON -DJSON_FastTests=ON -DJSON_GlobalUDLs=OFF
     -DCMAKE_CXX_FLAGS=-DJSON_TEST_NO_GLOBAL_UDLS
@@ -836,27 +836,17 @@ add_custom_target(ci_benchmarks
 ###############################################################################
 
 function(ci_get_cmake version var)
-    if (APPLE)
-        set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}-Darwin64/CMake.app/Contents/bin/cmake)
-        add_custom_command(
-            OUTPUT ${${var}}
-            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-Darwin64.tar.gz
-            COMMAND tar xfz cmake-${version}-Darwin64.tar.gz
-            COMMAND rm cmake-${version}-Darwin64.tar.gz
-            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-            COMMENT "Download CMake ${version}"
-        )
-    else()
-        set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}-Linux-x86_64/bin/cmake)
-        add_custom_command(
-            OUTPUT ${${var}}
-            COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}-Linux-x86_64.tar.gz
-            COMMAND tar xfz cmake-${version}-Linux-x86_64.tar.gz
-            COMMAND rm cmake-${version}-Linux-x86_64.tar.gz
-            WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-            COMMENT "Download CMake ${version}"
-        )
-    endif()
+    set(${var} ${PROJECT_BINARY_DIR}/cmake-${version}/bin/cmake)
+    add_custom_command(
+        OUTPUT ${${var}}
+        COMMAND wget -nc https://github.com/Kitware/CMake/releases/download/v${version}/cmake-${version}.tar.gz
+        COMMAND tar xfz cmake-${version}.tar.gz
+        COMMAND rm cmake-${version}.tar.gz
+        COMMAND ${CMAKE_COMMAND} -S cmake-${version} -B cmake-${version}
+        COMMAND ${CMAKE_COMMAND} --build cmake-${version} --parallel 10
+        WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+        COMMENT "Download CMake ${version}"
+    )
     set(${var} ${${var}} PARENT_SCOPE)
 endfunction()
 
