@@ -906,7 +906,10 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
         bool is_an_object = std::all_of(init.begin(), init.end(),
                                         [](const detail::json_ref<basic_json>& element_ref)
         {
-            return element_ref->is_array() && element_ref->size() == 2 && (*element_ref)[0].is_string();
+            // The cast is to ensure op[size_type] is called, bearing in mind size_type may not be int;
+            // (many string types can be constructed from 0 via its null-pointer guise, so we get a
+            // broken call to op[key_type], the wrong semantics and a 4804 warning on Windows)
+            return element_ref->is_array() && element_ref->size() == 2 && (*element_ref)[static_cast<size_type>(0)].is_string();
         });
 
         // adjust type if type deduction is not wanted
@@ -5159,7 +5162,11 @@ inline namespace json_literals
 /// @brief user-defined string literal for JSON values
 /// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json/
 JSON_HEDLEY_NON_NULL(1)
-inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+#if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
+    inline nlohmann::json operator ""_json(const char* s, std::size_t n)
+#else
+    inline nlohmann::json operator "" _json(const char* s, std::size_t n)
+#endif
 {
     return nlohmann::json::parse(s, s + n);
 }
@@ -5167,7 +5174,11 @@ inline nlohmann::json operator "" _json(const char* s, std::size_t n)
 /// @brief user-defined string literal for JSON pointer
 /// @sa https://json.nlohmann.me/api/basic_json/operator_literal_json_pointer/
 JSON_HEDLEY_NON_NULL(1)
-inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+#if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
+    inline nlohmann::json::json_pointer operator ""_json_pointer(const char* s, std::size_t n)
+#else
+    inline nlohmann::json::json_pointer operator "" _json_pointer(const char* s, std::size_t n)
+#endif
 {
     return nlohmann::json::json_pointer(std::string(s, n));
 }
@@ -5231,8 +5242,13 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 }  // namespace std
 
 #if JSON_USE_GLOBAL_UDLS
-    using nlohmann::literals::json_literals::operator "" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
-    using nlohmann::literals::json_literals::operator "" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+    #if !defined(JSON_HEDLEY_GCC_VERSION) || JSON_HEDLEY_GCC_VERSION_CHECK(4,9,0)
+        using nlohmann::literals::json_literals::operator ""_json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+        using nlohmann::literals::json_literals::operator ""_json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+    #else
+        using nlohmann::literals::json_literals::operator "" _json; // NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+        using nlohmann::literals::json_literals::operator "" _json_pointer; //NOLINT(misc-unused-using-decls,google-global-names-in-headers)
+    #endif
 #endif
 
 #include <nlohmann/detail/macro_unscope.hpp>
