@@ -385,7 +385,7 @@ struct MyIterator {
     using iterator_category = std::input_iterator_tag;
 
     MyIterator& operator++() {
-        MyContainer.advance();
+        target->advance();
         return *this;
     }
 
@@ -394,7 +394,7 @@ struct MyIterator {
     }
 
     reference operator*() const {
-        return target.get_current();
+        return target->get_current();
     }
 
     MyContainer* target = nullptr;
