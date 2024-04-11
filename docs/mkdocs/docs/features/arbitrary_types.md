@@ -265,7 +265,7 @@ struct bad_serializer
     }
 
     template <typename BasicJsonType>
-    static void to_json(const BasicJsonType& j, T& value) {
+    static void from_json(const BasicJsonType& j, T& value) {
       // this calls BasicJsonType::json_serializer<T>::from_json(j, value);
       // if BasicJsonType::json_serializer == bad_serializer ... oops!
       value = j.template template get<T>(); // oops!
