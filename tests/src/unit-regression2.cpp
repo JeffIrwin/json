@@ -866,7 +866,7 @@ TEST_CASE("regression tests 2")
         CHECK(j.dump() == "[1,4]");
     }
 
-    SECTION("issue #3343 - json and ordered_json are not interchangable")
+    SECTION("issue #3343 - json and ordered_json are not interchangeable")
     {
         json::object_t jobj({ { "product", "one" } });
         ordered_json::object_t ojobj({{"product", "one"}});

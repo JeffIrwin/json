@@ -828,7 +828,7 @@ TEST_CASE("parser class")
                     // for ranges in range of IEEE 754-2008 binary64 (double precision)
                     // this does not accommodate 64 bit integers without loss of accuracy.
                     // As 64 bit integers are now widely used in software, it is desirable
-                    // to expand support to to the full 64 bit (signed and unsigned) range
+                    // to expand support to the full 64 bit (signed and unsigned) range
                     // i.e. -(2**63) -> (2**64)-1.
 
                     // -(2**63)    ** Note: compilers see negative literals as negated positive numbers (hence the -1))
