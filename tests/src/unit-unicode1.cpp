@@ -155,7 +155,7 @@ TEST_CASE("Unicode (1/5)" * doctest::skip())
 
     SECTION("read all unicode characters")
     {
-        // read a file with all unicode characters stored as single-character
+        // read a file with all Unicode characters stored as single-character
         // strings in a JSON array
         std::ifstream f(TEST_DATA_DIRECTORY "/json_nlohmann_tests/all_unicode.json");
         json j;

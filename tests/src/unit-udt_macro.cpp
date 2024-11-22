@@ -38,6 +38,26 @@ class person_with_private_data
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_data, age, name, metadata)
 };
 
+class derived_person_with_private_data : public person_with_private_data
+{
+  private:
+    std::string hair_color{"blue"};
+
+  public:
+    bool operator==(const derived_person_with_private_data& rhs) const
+    {
+        return person_with_private_data::operator==(rhs) && hair_color == rhs.hair_color;
+    }
+
+    derived_person_with_private_data() = default;
+    derived_person_with_private_data(std::string name_, int age_, json metadata_, std::string hair_color_)
+        : person_with_private_data(std::move(name_), age_, std::move(metadata_))
+        , hair_color(std::move(hair_color_))
+    {}
+
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(derived_person_with_private_data, person_with_private_data, hair_color)
+};
+
 class person_with_private_data_2
 {
   private:
@@ -74,6 +94,31 @@ class person_with_private_data_2
     NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(person_with_private_data_2, age, name, metadata)
 };
 
+class derived_person_with_private_data_2 : public person_with_private_data_2
+{
+  private:
+    std::string hair_color{"blue"};
+
+  public:
+    bool operator==(const derived_person_with_private_data_2& rhs) const
+    {
+        return person_with_private_data_2::operator==(rhs) && hair_color == rhs.hair_color;
+    }
+
+    derived_person_with_private_data_2() = default;
+    derived_person_with_private_data_2(std::string name_, int age_, json metadata_, std::string hair_color_)
+        : person_with_private_data_2(std::move(name_), age_, std::move(metadata_))
+        , hair_color(std::move(hair_color_))
+    {}
+
+    std::string getHairColor() const
+    {
+        return hair_color;
+    }
+
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT(derived_person_with_private_data_2, person_with_private_data_2, hair_color)
+};
+
 class person_without_private_data_1
 {
   public:
@@ -94,6 +139,26 @@ class person_without_private_data_1
     {}
 
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_without_private_data_1, age, name, metadata)
+};
+
+class derived_person_without_private_data_1 : public person_without_private_data_1
+{
+  public:
+    std::string hair_color{"blue"};
+
+  public:
+    bool operator==(const derived_person_without_private_data_1& rhs) const
+    {
+        return person_without_private_data_1::operator==(rhs) && hair_color == rhs.hair_color;
+    }
+
+    derived_person_without_private_data_1() = default;
+    derived_person_without_private_data_1(std::string name_, int age_, json metadata_, std::string hair_color_)
+        : person_without_private_data_1(std::move(name_), age_, std::move(metadata_))
+        , hair_color(std::move(hair_color_))
+    {}
+
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(derived_person_without_private_data_1, person_without_private_data_1, hair_color)
 };
 
 class person_without_private_data_2
@@ -117,6 +182,26 @@ class person_without_private_data_2
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(person_without_private_data_2, age, name, metadata)
+
+class derived_person_without_private_data_2 : public person_without_private_data_2
+{
+  public:
+    std::string hair_color{"blue"};
+
+  public:
+    bool operator==(const derived_person_without_private_data_2& rhs) const
+    {
+        return person_without_private_data_2::operator==(rhs) && hair_color == rhs.hair_color;
+    }
+
+    derived_person_without_private_data_2() = default;
+    derived_person_without_private_data_2(std::string name_, int age_, json metadata_, std::string hair_color_)
+        : person_without_private_data_2(std::move(name_), age_, std::move(metadata_))
+        , hair_color(std::move(hair_color_))
+    {}
+};
+
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE(derived_person_without_private_data_2, person_without_private_data_2, hair_color)
 
 class person_without_private_data_3
 {
@@ -152,6 +237,31 @@ class person_without_private_data_3
 };
 
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT(person_without_private_data_3, age, name, metadata)
+
+class derived_person_without_private_data_3 : public person_without_private_data_3
+{
+  public:
+    std::string hair_color{"blue"};
+
+  public:
+    bool operator==(const derived_person_without_private_data_3& rhs) const
+    {
+        return person_without_private_data_3::operator==(rhs) && hair_color == rhs.hair_color;
+    }
+
+    derived_person_without_private_data_3() = default;
+    derived_person_without_private_data_3(std::string name_, int age_, json metadata_, std::string hair_color_)
+        : person_without_private_data_3(std::move(name_), age_, std::move(metadata_))
+        , hair_color(std::move(hair_color_))
+    {}
+
+    std::string getHairColor() const
+    {
+        return hair_color;
+    }
+};
+
+NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT(derived_person_without_private_data_3, person_without_private_data_3, hair_color)
 
 class person_with_private_alphabet
 {
@@ -214,6 +324,19 @@ class person_with_private_alphabet
     int y = 0;
     int z = 0;
     NLOHMANN_DEFINE_TYPE_INTRUSIVE(person_with_private_alphabet, a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x, y, z)
+};
+
+class derived_person_with_private_alphabet : public person_with_private_alphabet
+{
+  public:
+    bool operator==(const derived_person_with_private_alphabet& other) const
+    {
+        return person_with_private_alphabet::operator==(other) && schwa == other.schwa;
+    }
+
+  private:
+    int schwa = 0;
+    NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(derived_person_with_private_alphabet, person_with_private_alphabet, schwa)
 };
 
 class person_with_public_alphabet
@@ -319,7 +442,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE(person_without_default_constru
 
 } // namespace persons
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T,
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T, // NOLINT(readability-math-missing-parentheses)
                    persons::person_with_private_data,
                    persons::person_without_private_data_1,
                    persons::person_without_private_data_2)
@@ -345,7 +468,33 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT", T,
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE", T, // NOLINT(readability-math-missing-parentheses)
+                   persons::derived_person_with_private_data,
+                   persons::derived_person_without_private_data_1,
+                   persons::derived_person_without_private_data_2)
+{
+    SECTION("person")
+    {
+        // serialization
+        T p1("Erik", 1, {{"haircuts", 2}}, "red");
+        CHECK(json(p1).dump() == "{\"age\":1,\"hair_color\":\"red\",\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
+
+        // deserialization
+        auto p2 = json(p1).get<T>();
+        CHECK(p2 == p1);
+
+        // roundtrip
+        CHECK(T(json(p1)) == p1);
+        CHECK(json(T(json(p1))) == json(p1));
+
+        // check exception in case of missing field
+        json j = json(p1);
+        j.erase("age");
+        CHECK_THROWS_WITH_AS(j.get<T>(), "[json.exception.out_of_range.403] key 'age' not found", json::out_of_range);
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT", T, // NOLINT(readability-math-missing-parentheses)
                    persons::person_with_private_data_2,
                    persons::person_without_private_data_3)
 {
@@ -379,7 +528,43 @@ TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_TYPE_INTRU
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T,
+TEST_CASE_TEMPLATE("Serialization/deserialization via NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT and NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT", T, // NOLINT(readability-math-missing-parentheses)
+                   persons::derived_person_with_private_data_2,
+                   persons::derived_person_without_private_data_3)
+{
+    SECTION("derived person with default values")
+    {
+        // serialization of default constructed object
+        T p0;
+        CHECK(json(p0).dump() == "{\"age\":0,\"hair_color\":\"blue\",\"metadata\":null,\"name\":\"\"}");
+
+        // serialization
+        T p1("Erik", 1, {{"haircuts", 2}}, "red");
+        CHECK(json(p1).dump() == "{\"age\":1,\"hair_color\":\"red\",\"metadata\":{\"haircuts\":2},\"name\":\"Erik\"}");
+
+        // deserialization
+        auto p2 = json(p1).get<T>();
+        CHECK(p2 == p1);
+
+        // roundtrip
+        CHECK(T(json(p1)) == p1);
+        CHECK(json(T(json(p1))) == json(p1));
+
+        // check default value in case of missing field
+        json j = json(p1);
+        j.erase("name");
+        j.erase("age");
+        j.erase("metadata");
+        j.erase("hair_color");
+        T p3 = j.get<T>();
+        CHECK(p3.getName() == "");
+        CHECK(p3.getAge() == 0);
+        CHECK(p3.getMetadata() == nullptr);
+        CHECK(p3.getHairColor() == "blue");
+    }
+}
+
+TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/private member variables via NLOHMANN_DEFINE_TYPE_INTRUSIVE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE", T, // NOLINT(readability-math-missing-parentheses)
                    persons::person_with_private_alphabet,
                    persons::person_with_public_alphabet)
 {
@@ -451,7 +636,7 @@ TEST_CASE_TEMPLATE("Serialization/deserialization of classes with 26 public/priv
     }
 }
 
-TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", T,
+TEST_CASE_TEMPLATE("Serialization of non-default-constructible classes via NLOHMANN_DEFINE_TYPE_INTRUSIVE_ONLY_SERIALIZE and NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_ONLY_SERIALIZE", T, // NOLINT(readability-math-missing-parentheses)
                    persons::person_without_default_constructor_1,
                    persons::person_without_default_constructor_2)
 {

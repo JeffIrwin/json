@@ -14,7 +14,6 @@ using nlohmann::json;
 #include <fstream>
 #include <sstream>
 #include <iomanip>
-#include <iostream>
 #include <limits>
 #include <set>
 #include "make_test_data_available.hpp"
@@ -317,7 +316,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x39);
-                        const auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        const auto restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == positive);
                         CHECK(-1 - restored == i);
 
@@ -505,7 +504,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x19);
-                        const auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        const auto restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -744,7 +743,7 @@ TEST_CASE("CBOR")
 
                         // check individual bytes
                         CHECK(result[0] == 0x19);
-                        const auto restored = static_cast<uint16_t>(static_cast<uint8_t>(result[1]) * 256 + static_cast<uint8_t>(result[2]));
+                        const auto restored = static_cast<uint16_t>((static_cast<uint8_t>(result[1]) * 256) + static_cast<uint8_t>(result[2]));
                         CHECK(restored == i);
 
                         // roundtrip
@@ -990,7 +989,7 @@ TEST_CASE("CBOR")
                     {
                         0xfa, 0xff, 0x7f, 0xff, 0xff
                     };
-                    // the same with lowest float
+                    // the same with the lowest float
                     const auto result = json::to_cbor(j);
                     CHECK(result == expected);
                     // roundtrip
@@ -1881,7 +1880,7 @@ TEST_CASE("single CBOR roundtrip")
         {
             SECTION("std::ostringstream")
             {
-                std::basic_ostringstream<std::uint8_t> ss;
+                std::basic_ostringstream<char> ss;
                 json::to_cbor(j1, ss);
                 json j3 = json::from_cbor(ss.str());
                 CHECK(j1 == j3);

@@ -23,7 +23,7 @@ struct trait_test_arg
     static constexpr bool max_in_range = MaxInRange;
 };
 
-TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test)
+TEST_CASE_TEMPLATE_DEFINE("value_in_range_of trait", T, value_in_range_of_test) // NOLINT(readability-math-missing-parentheses)
 {
     using nlohmann::detail::value_in_range_of;
 

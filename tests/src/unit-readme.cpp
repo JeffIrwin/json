@@ -171,7 +171,7 @@ TEST_CASE("README" * doctest::skip())
 
             // find an entry
             CHECK(o.find("foo") != o.end());
-            if (o.find("foo") != o.end())
+            if (o.find("foo") != o.end()) // NOLINT(readability-container-contains)
             {
                 // there is an entry with key "foo"
             }

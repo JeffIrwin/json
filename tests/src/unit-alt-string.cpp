@@ -16,8 +16,8 @@
 
 /* forward declarations */
 class alt_string;
-bool operator<(const char* op1, const alt_string& op2) noexcept;
-void int_to_string(alt_string& target, std::size_t value);
+bool operator<(const char* op1, const alt_string& op2) noexcept; // NOLINT(misc-use-internal-linkage)
+void int_to_string(alt_string& target, std::size_t value); // NOLINT(misc-use-internal-linkage)
 
 /*
  * This is virtually a string class.

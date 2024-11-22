@@ -40,7 +40,7 @@ endif()
 option(JSON_BuildTests                     "Build the unit tests when BUILD_TESTING is enabled." ${JSON_BuildTests_INIT})
 option(JSON_CI                             "Enable CI build targets." OFF)
 option(JSON_Diagnostics                    "Use extended diagnostic messages." OFF)
-option(JSON_GlobalUDLs                     "Place use-defined string literals in the global namespace." ON)
+option(JSON_GlobalUDLs                     "Place user-defined string literals in the global namespace." ON)
 option(JSON_ImplicitConversions            "Enable implicit conversions." ON)
 option(JSON_DisableEnumSerialization       "Disable default integer enum serialization." OFF)
 option(JSON_LegacyDiscardedValueComparison "Enable legacy discarded value comparison." OFF)
@@ -57,7 +57,11 @@ endif ()
 ##
 include(GNUInstallDirs)
 
-set(NLOHMANN_JSON_TARGET_NAME               ${PROJECT_NAME})
+if (NOT DEFINED NLOHMANN_JSON_TARGET_NAME)
+    # Allow overriding the target name when using FetchContent / add_subdirectory.
+    set(NLOHMANN_JSON_TARGET_NAME ${PROJECT_NAME})
+endif()
+
 set(NLOHMANN_JSON_CONFIG_INSTALL_DIR        "${CMAKE_INSTALL_DATADIR}/cmake/${PROJECT_NAME}" CACHE INTERNAL "")
 set(NLOHMANN_JSON_INCLUDE_INSTALL_DIR       "${CMAKE_INSTALL_INCLUDEDIR}")
 set(NLOHMANN_JSON_TARGETS_EXPORT_NAME       "${PROJECT_NAME}Targets")
@@ -90,6 +94,10 @@ endif()
 
 if (JSON_Diagnostics)
     message(STATUS "Diagnostics enabled")
+endif()
+
+if (NOT JSON_GlobalUDLs)
+    message(STATUS "User-defined string literals are not put in the global namespace")
 endif()
 
 if (JSON_SystemInclude)
@@ -206,4 +214,5 @@ if(JSON_Install)
         FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
         DESTINATION ${NLOHMANN_JSON_PKGCONFIG_INSTALL_DIR}
     )
+    include(CPack)
 endif()

@@ -1111,11 +1111,11 @@ auto cbor = json::to_msgpack(j); // 0xD5 (fixext2), 0x10, 0xCA, 0xFE
 
 ## Supported compilers
 
-Though it's 2023 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
+Though it's 2024 already, the support for C++11 is still a bit sparse. Currently, the following compilers are known to work:
 
-- GCC 4.8 - 12.0 (and possibly later)
-- Clang 3.4 - 15.0 (and possibly later)
-- Apple Clang 9.1 - 13.1 (and possibly later)
+- GCC 4.8 - 14.2 (and possibly later)
+- Clang 3.4 - 20.0 (and possibly later)
+- Apple Clang 9.1 - 16.0 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Nvidia CUDA Compiler 11.0.221 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
@@ -1146,29 +1146,35 @@ The following compilers are currently used in continuous integration at [AppVeyo
 
 | Compiler                                                                                               | Operating System   | CI Provider    |
 |--------------------------------------------------------------------------------------------------------|--------------------|----------------|
-| Apple Clang 11.0.3 (clang-1103.0.32.62);  Xcode 11.7                                                   | macOS 11.7.1       | GitHub Actions |
-| Apple Clang 12.0.0 (clang-1200.0.32.29);  Xcode 12.4                                                   | macOS 11.7.1       | GitHub Actions |
-| Apple Clang 12.0.5 (clang-1205.0.22.11);  Xcode 12.5.1                                                 | macOS 11.7.1       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.0                                                   | macOS 11.7.1       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.1                                                   | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.30);  Xcode 13.2.1                                                 | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.5); Xcode 13.4.1                                                 | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0                                                   | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0.1                                                 | macOS 12.6.1       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.202); Xcode 14.1                                                   | macOS 12.6.1       | GitHub Actions |
-| Clang 3.5.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.6.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.7.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.8.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 3.9.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 4.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 5.0.2                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 6.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 7.0.1                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 8.0.0                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 9.0.0                                                                                            | Ubuntu 20.04.3 LTS | GitHub Actions |
-| Clang 10.0.0                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.1                                                   | macOS 12.7.6       | GitHub Actions |
+| Apple Clang 13.0.0 (clang-1300.0.29.30);  Xcode 13.2.1                                                 | macOS 12.7.6       | GitHub Actions |
+| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.7.6       | GitHub Actions |
+| Apple Clang 13.1.6 (clang-1316.0.21.2.5); Xcode 13.4.1                                                 | macOS 12.7.6       | GitHub Actions |
+| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0                                                   | macOS 12.7.6       | GitHub Actions |
+| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0.1                                                 | macOS 12.7.6       | GitHub Actions |
+| Apple Clang 14.0.0 (clang-1400.0.29.202); Xcode 14.1                                                   | macOS 12.7.6       | GitHub Actions |
+| Apple Clang 14.0.0 (clang-1400.0.29.202); Xcode 14.2                                                   | macOS 13.7         | GitHub Actions |
+| Apple Clang 14.0.3 (clang-1403.0.22.14.1); Xcode 14.3                                                  | macOS 13.7         | GitHub Actions |
+| Apple Clang 14.0.3 (clang-1403.0.22.14.1); Xcode 14.3.1                                                | macOS 13.7.1       | GitHub Actions |
+| Apple Clang 15.0.0 (clang-1500.0.40.1); Xcode 15.0.1                                                   | macOS 13.7         | GitHub Actions |
+| Apple Clang 15.0.0 (clang-1500.1.0.2.5); Xcode 15.1                                                    | macOS 13.7         | GitHub Actions |
+| Apple Clang 15.0.0 (clang-1500.1.0.2.5); Xcode 15.2                                                    | macOS 13.7         | GitHub Actions |
+| Apple Clang 15.0.0 (clang-1500.3.9.4); Xcode 15.3                                                      | macOS 14.7         | GitHub Actions |
+| Apple Clang 15.0.0 (clang-1500.3.9.4); Xcode 15.4                                                      | macOS 14.7         | GitHub Actions |
+| Apple Clang 16.0.0 (clang-1600.0.26.3); Xcode 16.0                                                     | macOS 15.0.1       | GitHub Actions |
+| Apple Clang 16.0.0 (clang-1600.0.26.4); Xcode 16.1                                                     | macOS 15.0.1       | GitHub Actions |
+| Clang 3.5.2                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 3.6.2                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 3.7.1                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 3.8.1                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 3.9.1                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 4.0.1                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 5.0.2                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 6.0.1                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 7.0.1                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 8.0.0                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 9.0.0                                                                                            | Ubuntu 22.04.1 LTS | GitHub Actions |
+| Clang 10.0.0                                                                                           | Ubuntu 22.04.1 LTS | GitHub Actions |
 | Clang 10.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
 | Clang 11.0.0 with MSVC-like command-line                                                               | Windows-10.0.17763 | GitHub Actions |
@@ -1182,20 +1188,28 @@ The following compilers are currently used in continuous integration at [AppVeyo
 | Clang 15.0.0 with GNU-like command-line                                                                | Windows-10.0.17763 | GitHub Actions |
 | Clang 15.0.4                                                                                           | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Clang 16.0.0 (16.0.0-++20221031071727+500876226c60-1~exp1~20221031071831.439)                          | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                                                      | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 4.9.4                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 5.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 6.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 7.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
+| Clang 16.0.6 (++20231112084702+7cbf1a259152-1~exp1~20231112084757.16)                                  | Ubuntu 20.04.1 LTS | GitHub Actions |
+| Clang 17.0.6 (++20231208085813+6009708b4367-1~exp1~20231208085906.81)                                  | Ubuntu 20.04.1 LTS | GitHub Actions |
+| Clang 18.1.8 (++20240731024826+3b5b5c1ec4a3-1~exp1~20240731144843.145)                                 | Ubuntu 20.04.1 LTS | GitHub Actions |
+| Clang 19.1.2 (++20241016063422+7ba7d8e2f7b6-1~exp1~20241016063541.55)                                  | Ubuntu 20.04.1 LTS | GitHub Actions |
+| Clang 20.0.0 (++20241022113049+f1ade1f874db-1~exp1~20241022113104.1036)                                | Ubuntu 22.04.1 LTS | GitHub Actions |
+| GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu8)                                                                      | Ubuntu 20.04.4 LTS | GitHub Actions |
+| GCC 4.9.3 (Ubuntu 4.9.3-13ubuntu2)                                                                     | Ubuntu 20.04.4 LTS | GitHub Actions |
+| GCC 4.8.5 (Ubuntu 4.8.5-4ubuntu2)                                                                      | Ubuntu 20.04.4 LTS | GitHub Actions |
+| GCC 5.5.0 (Ubuntu 5.5.0-12ubuntu1)                                                                     | Ubuntu 20.04.4 LTS | GitHub Actions |
+| GCC 6.4.0 (Ubuntu 6.4.0-17ubuntu1)                                                                     | Ubuntu 20.04.4 LTS | GitHub Actions |
+| GCC 7.5.0                                                                                              | Ubuntu 22.04.1 LTS | GitHub Actions |
 | GCC 8.1.0 (i686-posix-dwarf-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
 | GCC 8.1.0 (x86_64-posix-seh-rev0, Built by MinGW-W64 project)                                          | Windows-10.0.17763 | GitHub Actions |
-| GCC 8.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 9.5.0                                                                                              | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 10.4.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 8.5.0                                                                                              | Ubuntu 22.04.1 LTS | GitHub Actions |
+| GCC 9.5.0                                                                                              | Ubuntu 22.04.1 LTS | GitHub Actions |
+| GCC 10.5.0                                                                                             | Ubuntu 22.04.1 LTS | GitHub Actions |
 | GCC 11.1.0                                                                                             | Ubuntu (aarch64)   | Cirrus CI      |
-| GCC 11.3.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
-| GCC 12.2.0                                                                                             | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 11.5.0                                                                                             | Ubuntu 22.04.1 LTS | GitHub Actions |
+| GCC 12.4.0                                                                                             | Ubuntu 22.04.1 LTS | GitHub Actions |
 | GCC 13.0.0 20220605 (experimental)                                                                     | Ubuntu 20.04.3 LTS | GitHub Actions |
+| GCC 13.3.0                                                                                             | Ubuntu 22.04.1 LTS | GitHub Actions |
+| GCC 14.2.0                                                                                             | Ubuntu 22.04.1 LTS | GitHub Actions |
 | Intel C++ Compiler 2021.5.0.20211109                                                                   | Ubuntu 20.04.3 LTS | GitHub Actions |
 | NVCC 11.0.221                                                                                          | Ubuntu 20.04.3 LTS | GitHub Actions |
 | Visual Studio 14 2015 MSVC 19.0.24241.7 (Build Engine version 14.0.25420.1)                            | Windows-6.3.9600   | AppVeyor       |
@@ -1884,7 +1898,7 @@ json/tests/src/make_test_data_available.hpp:23: FATAL ERROR: REQUIRE( utils::che
 
 In case you have downloaded the library rather than checked out the code via Git, test `cmake_fetch_content_configure` will fail. Please execute `ctest -LE git_required` to skip these tests. See [issue #2189](https://github.com/nlohmann/json/issues/2189) for more information.
 
-Some tests change the installed files and hence make the whole process not reproducible. Please execute `ctest -LE not_reproducible` to skip these tests. See [issue #2324](https://github.com/nlohmann/json/issues/2324) for more information.
+Some tests change the installed files and hence make the whole process not reproducible. Please execute `ctest -LE not_reproducible` to skip these tests. See [issue #2324](https://github.com/nlohmann/json/issues/2324) for more information. Furthermore, assertions must be switched off to ensure reproducible builds (see [discussion 4494](https://github.com/nlohmann/json/discussions/4494)).
 
 Note you need to call `cmake -LE "not_reproducible|git_required"` to exclude both labels. See [issue #2596](https://github.com/nlohmann/json/issues/2596) for more information.
 

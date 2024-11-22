@@ -11,6 +11,11 @@
 // for some reason including this after the json header leads to linker errors with VS 2017...
 #include <locale>
 
+// skip tests if JSON_DisableEnumSerialization=ON (#4384)
+#if defined(JSON_DISABLE_ENUM_SERIALIZATION) && (JSON_DISABLE_ENUM_SERIALIZATION == 1)
+    #define SKIP_TESTS_FOR_ENUM_SERIALIZATION
+#endif
+
 #define JSON_TESTS_PRIVATE
 #include <nlohmann/json.hpp>
 using nlohmann::json;
@@ -169,6 +174,7 @@ TEST_CASE("regression tests 1")
         }
     }
 
+#ifndef SKIP_TESTS_FOR_ENUM_SERIALIZATION
     SECTION("pull request #71 - handle enum type")
     {
         enum { t = 0, u = 102};
@@ -191,6 +197,7 @@ TEST_CASE("regression tests 1")
             {"game_type", t}
         }));
     }
+#endif
 
     SECTION("issue #76 - dump() / parse() not idempotent")
     {

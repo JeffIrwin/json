@@ -20,7 +20,6 @@ TEST_CASE("concepts")
         // a, b: values of type X: json
 
         // TABLE 96 - Container Requirements
-
         // X::value_type must return T
         CHECK((std::is_same<json::value_type, json>::value));
 
