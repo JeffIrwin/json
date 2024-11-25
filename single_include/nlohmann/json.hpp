@@ -8518,6 +8518,7 @@ scan_number_zero:
             case '.':
             {
                 add(decimal_point_char);
+                decimal_point_position = token_buffer.size() - 1;
                 goto scan_number_decimal1;
             }
 
@@ -8554,6 +8555,7 @@ scan_number_any1:
             case '.':
             {
                 add(decimal_point_char);
+                decimal_point_position = token_buffer.size() - 1;
                 goto scan_number_decimal1;
             }
 
@@ -8791,6 +8793,7 @@ scan_number_done:
     {
         token_buffer.clear();
         token_string.clear();
+        decimal_point_position = std::string::npos;
         token_string.push_back(char_traits<char_type>::to_char_type(current));
     }
 
@@ -8899,6 +8902,11 @@ scan_number_done:
     /// return current string value (implicitly resets the token; useful only once)
     string_t& get_string()
     {
+        // translate decimal points from locale back to '.' (#4084)
+        if (decimal_point_char != '.' && decimal_point_position != std::string::npos)
+        {
+            token_buffer[decimal_point_position] = '.';
+        }
         return token_buffer;
     }
 
@@ -9096,6 +9104,8 @@ scan_number_done:
 
     /// the decimal point
     const char_int_type decimal_point_char = '.';
+    /// the position of the decimal point in the input
+    std::size_t decimal_point_position = std::string::npos;
 };
 
 }  // namespace detail

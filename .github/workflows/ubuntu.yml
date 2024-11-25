@@ -104,23 +104,29 @@ jobs:
 
   ci_test_coverage:
     runs-on: ubuntu-latest
-    container: ghcr.io/nlohmann/json-ci:v2.4.0
     permissions:
       contents: read
       checks: write
     steps:
       - uses: actions/checkout@v4
+      - name: Install dependencies and de_DE locale
+        run: |
+          sudo apt-get clean
+          sudo apt-get update
+          sudo apt-get install -y build-essential cmake lcov ninja-build make locales gcc-multilib g++-multilib
+          sudo locale-gen de_DE
+          sudo update-locale
       - name: Run CMake
         run: cmake -S . -B build -DJSON_CI=On
       - name: Build
         run: cmake --build build --target ci_test_coverage
       - name: Archive coverage report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: code-coverage-report
           path: ${{ github.workspace }}/build/html
       - name: Publish report to Coveralls
-        uses: coverallsapp/github-action@master
+        uses: coverallsapp/github-action@v2.3.4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path-to-lcov: ${{ github.workspace }}/build/json.info.filtered.noexcept
