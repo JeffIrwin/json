@@ -1115,7 +1115,7 @@ Though it's 2024 already, the support for C++11 is still a bit sparse. Currently
 
 - GCC 4.8 - 14.2 (and possibly later)
 - Clang 3.4 - 20.0 (and possibly later)
-- Apple Clang 9.1 - 16.0 (and possibly later)
+- Apple Clang 9.1 - 16.1 (and possibly later)
 - Intel C++ Compiler 17.0.2 (and possibly later)
 - Nvidia CUDA Compiler 11.0.221 (and possibly later)
 - Microsoft Visual C++ 2015 / Build Tools 14.0.25123.0 (and possibly later)
@@ -1146,13 +1146,7 @@ The following compilers are currently used in continuous integration at [AppVeyo
 
 | Compiler                                                                                               | Operating System   | CI Provider    |
 |--------------------------------------------------------------------------------------------------------|--------------------|----------------|
-| Apple Clang 13.0.0 (clang-1300.0.29.3);   Xcode 13.1                                                   | macOS 12.7.6       | GitHub Actions |
-| Apple Clang 13.0.0 (clang-1300.0.29.30);  Xcode 13.2.1                                                 | macOS 12.7.6       | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.3); Xcode 13.3.1                                                 | macOS 12.7.6       | GitHub Actions |
-| Apple Clang 13.1.6 (clang-1316.0.21.2.5); Xcode 13.4.1                                                 | macOS 12.7.6       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0                                                   | macOS 12.7.6       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.102); Xcode 14.0.1                                                 | macOS 12.7.6       | GitHub Actions |
-| Apple Clang 14.0.0 (clang-1400.0.29.202); Xcode 14.1                                                   | macOS 12.7.6       | GitHub Actions |
+| Apple Clang 14.0.0 (clang-1400.0.29.202); Xcode 14.1                                                   | macOS 13.7         | GitHub Actions |
 | Apple Clang 14.0.0 (clang-1400.0.29.202); Xcode 14.2                                                   | macOS 13.7         | GitHub Actions |
 | Apple Clang 14.0.3 (clang-1403.0.22.14.1); Xcode 14.3                                                  | macOS 13.7         | GitHub Actions |
 | Apple Clang 14.0.3 (clang-1403.0.22.14.1); Xcode 14.3.1                                                | macOS 13.7.1       | GitHub Actions |
