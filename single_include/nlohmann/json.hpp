@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 /****************************************************************************\
@@ -37,7 +37,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -50,7 +50,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -152,7 +152,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -179,7 +179,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -199,7 +199,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -215,7 +215,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -227,7 +227,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -240,7 +240,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -327,8 +327,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
-// SPDX-FileCopyrightText: 2016-2021 Evan Nemerson <evan@nemerson.com>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2016 - 2021 Evan Nemerson <evan@nemerson.com>
 // SPDX-License-Identifier: MIT
 
 /* Hedley - https://nemequ.github.io/hedley
@@ -2976,7 +2976,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -3051,7 +3051,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -3093,7 +3093,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-FileCopyrightText: 2018 The Abseil Authors
 // SPDX-License-Identifier: MIT
 
@@ -3267,7 +3267,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -3284,7 +3284,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -3352,7 +3352,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -3372,7 +3372,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -3396,7 +3396,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #ifndef INCLUDE_NLOHMANN_JSON_FWD_HPP_
@@ -4247,7 +4247,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -4649,7 +4649,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -4673,7 +4673,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -5197,7 +5197,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -5220,7 +5220,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -5958,7 +5958,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -6070,7 +6070,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -6203,7 +6203,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -6220,6 +6220,9 @@ NLOHMANN_JSON_NAMESPACE_END
 #include <string> // char_traits, string
 #include <utility> // make_pair, move
 #include <vector> // vector
+#ifdef __cpp_lib_byteswap
+    #include <bit>  //byteswap
+#endif
 
 // #include <nlohmann/detail/exceptions.hpp>
 
@@ -6229,7 +6232,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -6298,6 +6301,13 @@ class file_input_adapter
         return std::fgetc(m_file);
     }
 
+    // returns the number of characters successfully read
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        return fread(dest, 1, sizeof(T) * count, m_file);
+    }
+
   private:
     /// the file pointer to read from
     std::FILE* m_file;
@@ -6357,6 +6367,17 @@ class input_stream_adapter
         return res;
     }
 
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        auto res = static_cast<std::size_t>(sb->sgetn(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(count * sizeof(T))));
+        if (JSON_HEDLEY_UNLIKELY(res < count * sizeof(T)))
+        {
+            is->clear(is->rdstate() | std::ios::eofbit);
+        }
+        return res;
+    }
+
   private:
     /// the associated input stream
     std::istream* is = nullptr;
@@ -6386,6 +6407,26 @@ class iterator_input_adapter
         }
 
         return char_traits<char_type>::eof();
+    }
+
+    // for general iterators, we cannot really do something better than falling back to processing the range one-by-one
+    template<class T>
+    std::size_t get_elements(T* dest, std::size_t count = 1)
+    {
+        auto* ptr = reinterpret_cast<char*>(dest);
+        for (std::size_t read_index = 0; read_index < count * sizeof(T); ++read_index)
+        {
+            if (JSON_HEDLEY_LIKELY(current != end))
+            {
+                ptr[read_index] = static_cast<char>(*current);
+                std::advance(current, 1);
+            }
+            else
+            {
+                return read_index;
+            }
+        }
+        return count * sizeof(T);
     }
 
   private:
@@ -6549,6 +6590,13 @@ class wide_string_input_adapter
         JSON_ASSERT(utf8_bytes_filled > 0);
         JSON_ASSERT(utf8_bytes_index < utf8_bytes_filled);
         return utf8_bytes[utf8_bytes_index++];
+    }
+
+    // parsing binary with wchar doesn't make sense, but since the parsing mode can be runtime, we need something here
+    template<class T>
+    std::size_t get_elements(T* /*dest*/, std::size_t /*count*/ = 1)
+    {
+        JSON_THROW(parse_error::create(112, 1, "wide string type cannot be interpreted as binary data", nullptr));
     }
 
   private:
@@ -6736,7 +6784,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -7468,7 +7516,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -9119,7 +9167,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -12008,6 +12056,29 @@ class binary_reader
     }
 
     /*!
+    @brief get_to read into a primitive type
+
+    This function provides the interface to the used input adapter. It does
+    not throw in case the input reached EOF, but returns false instead
+
+    @return bool, whether the read was successful
+    */
+    template<class T>
+    bool get_to(T& dest, const input_format_t format, const char* context)
+    {
+        auto new_chars_read = ia.get_elements(&dest);
+        chars_read += new_chars_read;
+        if (JSON_HEDLEY_UNLIKELY(new_chars_read < sizeof(T)))
+        {
+            // in case of failure, advance position by 1 to report failing location
+            ++chars_read;
+            sax->parse_error(chars_read, "<end of file>", parse_error::create(110, chars_read, exception_message(format, "unexpected end of input", context), nullptr));
+            return false;
+        }
+        return true;
+    }
+
+    /*!
     @return character read from the input after ignoring all 'N' entries
     */
     char_int_type get_ignore_noop()
@@ -12019,6 +12090,28 @@ class binary_reader
         while (current == 'N');
 
         return current;
+    }
+
+    template<class NumberType>
+    static void byte_swap(NumberType& number)
+    {
+        constexpr std::size_t sz = sizeof(number);
+#ifdef __cpp_lib_byteswap
+        if constexpr (sz == 1)
+        {
+            return;
+        }
+        if constexpr(std::is_integral_v<NumberType>)
+        {
+            number = std::byteswap(number);
+            return;
+        }
+#endif
+        auto* ptr = reinterpret_cast<std::uint8_t*>(&number);
+        for (std::size_t i = 0; i < sz / 2; ++i)
+        {
+            std::swap(ptr[i], ptr[sz - i - 1]);
+        }
     }
 
     /*
@@ -12039,29 +12132,16 @@ class binary_reader
     template<typename NumberType, bool InputIsLittleEndian = false>
     bool get_number(const input_format_t format, NumberType& result)
     {
-        // step 1: read input into array with system's byte order
-        std::array<std::uint8_t, sizeof(NumberType)> vec{};
-        for (std::size_t i = 0; i < sizeof(NumberType); ++i)
+        // read in the original format
+
+        if (JSON_HEDLEY_UNLIKELY(!get_to(result, format, "number")))
         {
-            get();
-            if (JSON_HEDLEY_UNLIKELY(!unexpect_eof(format, "number")))
-            {
-                return false;
-            }
-
-            // reverse byte order prior to conversion if necessary
-            if (is_little_endian != (InputIsLittleEndian || format == input_format_t::bjdata))
-            {
-                vec[sizeof(NumberType) - i - 1] = static_cast<std::uint8_t>(current);
-            }
-            else
-            {
-                vec[i] = static_cast<std::uint8_t>(current); // LCOV_EXCL_LINE
-            }
+            return false;
         }
-
-        // step 2: convert array into number of type T and return
-        std::memcpy(&result, vec.data(), sizeof(NumberType));
+        if (is_little_endian != (InputIsLittleEndian || format == input_format_t::bjdata))
+        {
+            byte_swap(result);
+        }
         return true;
     }
 
@@ -12271,7 +12351,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -12800,7 +12880,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -12813,7 +12893,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -12972,7 +13052,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -13743,7 +13823,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -13878,7 +13958,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -13920,7 +14000,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -14915,7 +14995,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -15007,7 +15087,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -15033,7 +15113,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -17001,8 +17081,8 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2008-2009 Björn Hoehrmann <bjoern@hoehrmann.de>
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2008 - 2009 Björn Hoehrmann <bjoern@hoehrmann.de>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -17027,7 +17107,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
 // SPDX-FileCopyrightText: 2009 Florian Loitsch <https://florian.loitsch.com/>
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -19122,7 +19202,7 @@ NLOHMANN_JSON_NAMESPACE_END
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -24678,7 +24758,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 
@@ -24723,7 +24803,7 @@ inline void swap(nlohmann::NLOHMANN_BASIC_JSON_TPL& j1, nlohmann::NLOHMANN_BASIC
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 

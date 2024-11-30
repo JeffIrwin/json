@@ -3,7 +3,7 @@
 // |  |  |__   |  |  | | | |  version 3.11.3
 // |_____|_____|_____|_|___|  https://github.com/nlohmann/json
 //
-// SPDX-FileCopyrightText: 2013-2023 Niels Lohmann <https://nlohmann.me>
+// SPDX-FileCopyrightText: 2013 - 2024 Niels Lohmann <https://nlohmann.me>
 // SPDX-License-Identifier: MIT
 
 #include "doctest_compatibility.h"
@@ -1506,6 +1506,22 @@ TEST_CASE("MessagePack")
             CHECK(json::from_msgpack(std::vector<uint8_t>({0x81, 0xA1, 0x61}), true, false).is_discarded());
             CHECK(json::from_msgpack(std::vector<uint8_t>({0xc4, 0x02}), true, false).is_discarded());
             CHECK(json::from_msgpack(std::vector<uint8_t>({0xc4}), true, false).is_discarded());
+        }
+
+        SECTION("unexpected end inside int with stream")
+        {
+            json _;
+            const std::string data = {static_cast<char>(0xd2u), static_cast<char>(0x12u), static_cast<char>(0x34u), static_cast<char>(0x56u)};
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(std::istringstream(data, std::ios::binary)),
+                                 "[json.exception.parse_error.110] parse error at byte 5: syntax error while parsing MessagePack number: unexpected end of input", json::parse_error&);
+        }
+        SECTION("misuse wchar for binary")
+        {
+            json _;
+            // creates 0xd2 after UTF-8 decoding, triggers get_elements in wide_string_input_adapter for code coverage
+            const std::u32string data = {static_cast<char32_t>(0x0280)};
+            CHECK_THROWS_WITH_AS(_ = json::from_msgpack(data),
+                                 "[json.exception.parse_error.112] parse error at byte 1: wide string type cannot be interpreted as binary data", json::parse_error&);
         }
 
         SECTION("unsupported bytes")

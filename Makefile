@@ -279,6 +279,6 @@ serve_header:
 ##########################################################################
 
 reuse:
-	pipx run reuse addheader --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
-	pipx run reuse addheader $(TESTS_SRCS) --style=c -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2022"
+	pipx run reuse annotate --recursive single_include include -tjson --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2024" --merge-copyrights
+	pipx run reuse annotate $(TESTS_SRCS) -tjson_support --license MIT --copyright "Niels Lohmann <https://nlohmann.me>" --year "2013-2024" --merge-copyrights
 	pipx run reuse lint
