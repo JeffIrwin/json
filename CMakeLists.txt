@@ -81,23 +81,23 @@ else()
 endif()
 
 if (NOT JSON_ImplicitConversions)
-    message(STATUS "Implicit conversions are disabled")
+    message(STATUS "Implicit conversions are disabled (JSON_USE_IMPLICIT_CONVERSIONS=0)")
 endif()
 
 if (JSON_DisableEnumSerialization)
-    message(STATUS "Enum integer serialization is disabled")
+    message(STATUS "Enum integer serialization is disabled (JSON_DISABLE_ENUM_SERIALIZATION=0)")
 endif()
 
 if (JSON_LegacyDiscardedValueComparison)
-    message(STATUS "Legacy discarded value comparison enabled")
+    message(STATUS "Legacy discarded value comparison enabled (JSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=1)")
 endif()
 
 if (JSON_Diagnostics)
-    message(STATUS "Diagnostics enabled")
+    message(STATUS "Diagnostics enabled (JSON_DIAGNOSTICS=1)")
 endif()
 
 if (NOT JSON_GlobalUDLs)
-    message(STATUS "User-defined string literals are not put in the global namespace")
+    message(STATUS "User-defined string literals are not put in the global namespace (JSON_USE_GLOBAL_UDLS=0)")
 endif()
 
 if (JSON_SystemInclude)

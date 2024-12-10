@@ -1,6 +1,5 @@
-# NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT
-
-# NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT
+<h1>NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE_WITH_DEFAULT,
+    NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE, NLOHMANN_DEFINE_DERIVED_TYPE_NON_INTRUSIVE_WITH_DEFAULT</h1>
 
 ```cpp
 #define NLOHMANN_DEFINE_DERIVED_TYPE_INTRUSIVE(type, base_type, member...)                  // (1)
@@ -18,7 +17,6 @@ Like [`NLOHMANN_DEFINE_TYPE_INTRUSIVE`](nlohmann_define_type_intrusive.md), they
 - Macros 3 and 4 are to be defined **outside** the class/struct to create code for, but **inside** its namespace.
 Like [`NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE`](nlohmann_define_type_non_intrusive.md),
 they **cannot** access private members.
-
 
 The first  parameter is the name of the derived class/struct,
 the second parameter is the name of the base class/struct and all remaining parameters name the members.

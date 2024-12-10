@@ -1024,8 +1024,8 @@ add_custom_target(ci_test_examples
 )
 
 add_custom_target(ci_test_api_documentation
-    COMMAND ${Python3_EXECUTABLE} scripts/check_structure.py
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs
+    COMMAND ${Python3_EXECUTABLE} ../scripts/check_structure.py
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/docs/mkdocs/docs
     COMMENT "Lint the API documentation"
 )
 

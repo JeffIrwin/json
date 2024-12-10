@@ -14,61 +14,178 @@ When executed, this program should create output similar to
 
 ## Homebrew
 
-If you are using OS X and [Homebrew](http://brew.sh), just type
+!!! abstract "Summary"
+
+    formula: [**`nlohmann-json`**](https://formulae.brew.sh/formula/nlohmann-json)
+
+    - :octicons-tag-24: Availalbe versions: current version and development version (with `--HEAD` parameter)
+    - :octicons-rocket-24: The formula is updated with every release.
+    - :octicons-person-24: Maintainer: Niels Lohmann
+    - :octicons-file-24: File issues at the [Homebrew issue tracker](https://github.com/Homebrew/homebrew-core/issues)
+    - :octicons-question-24: [Homebrew website](https://brew.sh)
+
+If you are using OS X and [Homebrew](http://brew.sh), you can install the library with
 
 ```sh
 brew install nlohmann-json
 ```
 
-and you're set. If you want the bleeding edge rather than the latest release, use
+The header can be used directly in your code or via CMake.
 
-```sh
-brew install nlohmann-json --HEAD
-```
-
-instead. See [nlohmann-json](https://formulae.brew.sh/formula/nlohmann-json) for more information.
-
-??? example
+??? example "Example: Raw compilation"
 
     1. Create the following file:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/example.cpp"
+        --8<-- "integration/homebrew/example.cpp"
         ```
 
-    2. Install the package
+    2. Install the package:
 
         ```sh
         brew install nlohmann-json
         ```
 
-    3. Determine the include path, which defaults to `/usr/local/Cellar/nlohmann-json/$version/include`, where `$version` is the version of the library, e.g. `3.7.3`. The path of the library can be determined with
+    3. Compile the code and pass the Homebrew prefix to the include path such that the library can be found:
 
         ```sh
-        brew list nlohmann-json
+        c++ example.cpp -I$(brew --prefix nlohmann-json)/include -std=c++11 -o example
         ```
 
-    4. Compile the code. For instance, the code can be compiled using Clang with
+??? example "Example: CMake"
+
+    1. Create the following files:
+
+        ```cpp title="example.cpp"
+        --8<-- "integration/homebrew/example.cpp"
+        ```
+
+        ```cmake title="CMakeLists.txt"
+        --8<-- "integration/homebrew/CMakeLists.txt"
+        ```
+
+    2. Install the package:
 
         ```sh
-        clang++ example.cpp -I/usr/local/Cellar/nlohmann-json/3.7.3/include -std=c++11 -o example
+        brew install nlohmann-json
         ```
 
-:material-update: The [formula](https://formulae.brew.sh/formula/nlohmann-json) is updated automatically.
+    3. Compile the code and pass the Homebrew prefix to CMake to find installed packages via `#!cmake find_package`:
+
+        ```sh
+        CMAKE_PREFIX_PATH=$(brew --prefix) cmake -S . -B build
+        cmake --build build
+        ```
 
 ## Meson
 
-If you are using the [Meson Build System](http://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the `include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively, you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/nlohmann_json), or simply use `meson wrap install nlohmann_json`. Please see the meson project for any issues regarding the packaging.
+!!! abstract "Summary"
 
-The provided `meson.build` can also be used as an alternative to cmake for installing `nlohmann_json` system-wide in which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json` pkg-config dependency. In Meson, it is preferred to use the [`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than using the subproject directly.
+    wrap: **`nlohmann_json`**
+
+    - :octicons-tag-24: Availalbe versions: current version and select older versions (see
+      [WrapDB](https://mesonbuild.com/Wrapdb-projects.html))
+    - :octicons-rocket-24: The package is update automatically from file
+      [`meson.build`](https://github.com/nlohmann/json/blob/develop/meson.build).
+    - :octicons-file-24: File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
+    - :octicons-question-24: [Meson website](https://mesonbuild.com/index.html)
+
+If you are using the [Meson Build System](http://mesonbuild.com), add this source tree as a [meson subproject](https://mesonbuild.com/Subprojects.html#using-a-subproject). You may also use the
+`include.zip` published in this project's [Releases](https://github.com/nlohmann/json/releases) to reduce the size of the vendored source tree. Alternatively,
+you can get a wrap file by downloading it from [Meson WrapDB](https://mesonbuild.com/Wrapdb-projects.html), or simply
+use
+
+```shell
+meson wrap install nlohmann_json
+```
+
+Please see the Meson project for any issues regarding the packaging.
+
+The provided `meson.build` can also be used as an alternative to CMake for installing `nlohmann_json` system-wide in
+which case a pkg-config file is installed. To use it, simply have your build system require the `nlohmann_json`
+pkg-config dependency. In Meson, it is preferred to use the
+[`dependency()`](https://mesonbuild.com/Reference-manual.html#dependency) object with a subproject fallback, rather than
+using the subproject directly.
+
+??? example "Example: Wrap"
+
+    1. Create the following files:
+
+        ```ini title="meson.build"
+        --8<-- "integration/meson/meson.build"
+        ```
+
+        ```cpp title="example.cpp"
+        --8<-- "integration/meson/example.cpp"
+        ```
+
+    2. Use the Meson WrapDB to fetch the nlohmann/json wrap:
+
+        ```shell
+        mkdir subprojects
+        meson wrap install nlohmann_json
+        ```
+
+    3. Build:
+
+        ```shell
+        meson setup build
+        meson compile -C build
+        ```
 
 ## Bazel
 
-This repository provides a [Bazel](https://bazel.build/) `WORKSPACE.bazel` and a corresponding `BUILD.bazel` file. Therefore, this repository can be referenced by workspace rules such as `http_archive`, `git_repository`, or `local_repository` from other Bazel workspaces. To use the library you only need to depend on the target `@nlohmann_json//:json` (e.g. via `deps` attribute).
+!!! abstract "Summary"
+
+    use `http_archive`, `git_repository`, or `local_repository`
+
+    - :octicons-tag-24: Any version, as version is specified in `WORKSPACE` file
+    - :octicons-file-24: File issues at the [library issue tracker](https://github.com/nlohmann/json/issues)
+    - :octicons-question-24: [Bazel website](https://bazel.build)
+
+This repository provides a [Bazel](https://bazel.build/) `WORKSPACE.bazel` and a corresponding `BUILD.bazel` file. Therefore, this
+repository can be referenced by workspace rules such as `http_archive`, `git_repository`, or `local_repository` from
+other Bazel workspaces. To use the library you only need to depend on the target `@nlohmann_json//:json` (e.g., via
+`deps` attribute).
+
+??? example
+
+    1. Create the following files:
+
+        ```ini title="BUILD"
+        --8<-- "integration/bazel/BUILD"
+        ```
+
+        ```ini title="WORKSPACE"
+        --8<-- "integration/bazel/WORKSPACE"
+        ```
+
+        ```cpp title="example.cpp"
+        --8<-- "integration/bazel/example.cpp"
+        ```
+
+    2. Build and run:
+
+        ```shell
+        bazel build //:main
+        bazel run //:main
+        ```
 
 ## Conan
 
-If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s requires, where `x.y.z` is the release version you want to use. Please file issues [here](https://github.com/conan-io/conan-center-index/issues) if you experience problems with the packages.
+!!! abstract "Summary"
+
+    recipe: [**`nlohmann_json`**](https://conan.io/center/recipes/nlohmann_json)
+
+    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+      [Conan Center](https://conan.io/center/recipes/nlohmann_json))
+    - :octicons-rocket-24: The package is update automatically via
+      [this recipe](https://github.com/conan-io/conan-center-index/tree/master/recipes/nlohmann_json).
+    - :octicons-file-24: File issues at the [Conan Center issue tracker](https://github.com/conan-io/conan-center-index/issues)
+    - :octicons-question-24: [Conan website](https://conan.io)
+
+If you are using [Conan](https://www.conan.io/) to manage your dependencies, merely add `nlohmann_json/x.y.z` to your `conanfile`'s
+requires, where `x.y.z` is the release version you want to use.
 
 ??? example
 
@@ -86,33 +203,147 @@ If you are using [Conan](https://www.conan.io/) to manage your dependencies, mer
         --8<-- "integration/conan/example.cpp"
         ```
 
-    2. Build:
+    2. Call Conan:
 
         ```sh
-        mkdir build
-        cd build
-        conan install ..
-        cmake ..
-        cmake --build .
+        conan install . --output-folder=build --build=missing
         ```
 
-:material-update: The [package](https://conan.io/center/nlohmann_json) is updated automatically.
+    3. Build:
+
+        ```sh
+        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="conan_toolchain.cmake" -DCMAKE_BUILD_TYPE=Release
+        cmake --build build
+        ```
 
 ## Spack
 
-If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the [`nlohmann-json` package](https://spack.readthedocs.io/en/latest/package_list.html#nlohmann-json). Please see the [spack project](https://github.com/spack/spack) for any issues regarding the packaging.
+!!! abstract "Summary"
+
+    package: [**`nlohmann-json`**](https://packages.spack.io/package.html?name=nlohmann-json)
+
+    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+      [Spack package](https://packages.spack.io/package.html?name=nlohmann-json))
+    - :octicons-rocket-24: The formula is updated with every release.
+    - :octicons-person-24: Maintainer: [Axel Huebl](https://github.com/ax3l)
+    - :octicons-file-24: File issues at the [Spack issue tracker](https://github.com/spack/spack/issues)
+    - :octicons-question-24: [Spack website](https://spack.io)
+
+If you are using [Spack](https://www.spack.io/) to manage your dependencies, you can use the
+[`nlohmann-json` package](https://packages.spack.io/package.html?name=nlohmann-json) via
+
+```shell
+spack install nlohmann-json
+```
+
+Please see the [Spack project](https://github.com/spack/spack) for any issues regarding the packaging.
+
+??? example
+
+    1. Create the following files:
+
+        ```cmake title="CMakeLists.txt"
+        --8<-- "integration/spack/CMakeLists.txt"
+        ```
+
+        ```cpp title="example.cpp"
+        --8<-- "integration/spack/example.cpp"
+        ```
+
+    2. Install the library:
+
+        ```sh
+        spack install nlohmann-json
+        ```
+
+    3. Load the environment for your Spack-installed packages:
+
+        ```sh
+        spack load nlohmann-json
+        ```
+
+    4. Build the project with CMake:
+
+        ```sh
+        cmake -S . -B build -DCMAKE_PREFIX_PATH=$(spack location -i nlohmann-json)
+        cmake --build build
+        ```
 
 ## Hunter
 
-If you are using [hunter](https://github.com/cpp-pm/hunter) on your project for external dependencies, then you can use the [nlohmann_json package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html). Please see the hunter project for any issues regarding the packaging.
+!!! abstract "Summary"
+
+    package: [**`nlohmann_json`**](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html)
+
+    - :octicons-tag-24: Availalbe versions: current version and older versions (see
+      [Hunter package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html))
+    - :octicons-rocket-24: The formula is updated with every release.
+    - :octicons-file-24: File issues at the [Hunter issue tracker](https://github.com/cpp-pm/hunter/issues)
+    - :octicons-question-24: [Hunter website](https://hunter.readthedocs.io/en/latest/)
+
+If you are using [Hunter](https://github.com/cpp-pm/hunter) on your project for external dependencies, then you can use
+the [nlohmann_json package](https://hunter.readthedocs.io/en/latest/packages/pkg/nlohmann_json.html) via
+
+```cmake
+hunter_add_package(nlohmann_json)
+```
+
+Please see the  Hunter project for any issues regarding the packaging.
+
+??? example
+
+    1. Create the following files:
+
+        ```cmake title="CMakeLists.txt"
+        --8<-- "integration/hunter/CMakeLists.txt"
+        ```
+
+        ```cpp title="example.cpp"
+        --8<-- "integration/hunter/example.cpp"
+        ```
+
+    2. Download required files
+
+        ```shell
+        mkdir cmake
+        wget https://raw.githubusercontent.com/cpp-pm/gate/master/cmake/HunterGate.cmake -O cmake/HunterGate.cmake
+        ```
+
+    3. Build the project with CMake:
+
+        ```shell
+        cmake -S . -B build
+        cmake --build build
+        ```
 
 ## Buckaroo
 
-If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. Please file issues [here](https://github.com/buckaroo-pm/nlohmann-json). There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
+If you are using [Buckaroo](https://buckaroo.pm), you can install this library's module with `buckaroo add github.com/buckaroo-pm/nlohmann-json`. There is a demo repo [here](https://github.com/njlr/buckaroo-nholmann-json-example).
+
+!!! warning
+
+    The module is outdated as the respective [repository](https://github.com/buckaroo-pm/nlohmann-json) has not been
+    updated in years.
 
 ## vcpkg
 
-If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can install the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json) with `vcpkg install nlohmann-json` and follow the then displayed descriptions. Please see the vcpkg project for any issues regarding the packaging.
+!!! abstract "Summary"
+
+    package: [**`nlohmann-json`**](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json)
+
+    - :octicons-tag-24: Availalbe versions: current version
+    - :octicons-rocket-24: The formula is updated with every release.
+    - :octicons-file-24: File issues at the [vcpkg issue tracker](https://github.com/microsoft/vcpkg/issues)
+    - :octicons-question-24: [vcpkg website](https://vcpkg.io/)
+
+If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project for external dependencies, then you can
+install the [nlohmann-json package](https://github.com/Microsoft/vcpkg/tree/master/ports/nlohmann-json) with
+
+```shell
+vcpkg install nlohmann-json
+```
+
+and follow the then displayed descriptions. Please see the vcpkg project for any issues regarding the packaging.
 
 ??? example
 
@@ -135,19 +366,60 @@ If you are using [vcpkg](https://github.com/Microsoft/vcpkg/) on your project fo
     3. Build:
 
         ```sh
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake
-        cmake --build .
+        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+        cmake --build build
         ```
-
-    Note you need to adjust `/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake` to your system.
 
 ## cget
 
-If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest development version with `cget install nlohmann/json`. A specific version can be installed with `cget install nlohmann/json@v3.1.0`. Also, the multiple header version can be installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
+!!! abstract "Summary"
 
-:material-update: cget reads directly from the [GitHub repository](https://github.com/nlohmann/json) and is always up-to-date.
+    package: [**`nlohmann/json`**](https://github.com/pfultz2/cget-recipes/blob/master/recipes/nlohmann/json/package.txt)
+
+    - :octicons-tag-24: Availalbe versions: current version and older versions
+    - :octicons-rocket-24: The formula is updated with every release.
+    - :octicons-file-24: File issues at the [cget issue tracker](https://github.com/pfultz2/cget-recipes/issues)
+    - :octicons-question-24: [cget website](https://cget.readthedocs.io/)
+
+If you are using [cget](http://cget.readthedocs.io/en/latest/), you can install the latest `master` version with
+
+```shell
+cget install nlohmann/json
+```
+
+A specific version can be installed with `cget install nlohmann/json@v3.11.3`. Also, the multiple header version can be
+installed by adding the `-DJSON_MultipleHeaders=ON` flag (i.e., `cget install nlohmann/json -DJSON_MultipleHeaders=ON`).
+
+??? example
+
+    1. Create the following files:
+
+        ```cmake title="CMakeLists.txt"
+        --8<-- "integration/vcpkg/CMakeLists.txt"
+        ```
+    
+        ```cpp title="example.cpp"
+        --8<-- "integration/vcpkg/example.cpp"
+        ```
+
+    2. Initialize cget
+
+        ```shell
+        cget init
+        ```
+ 
+    3. Install the library
+
+        ```shell
+        cget install nlohmann/json
+        ```
+
+    4. Build
+
+        ```shell
+        cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=cget/cget/cget.cmake
+        cmake --build build
+        ```
 
 ## CocoaPods
 
@@ -191,8 +463,21 @@ If you are using [`wsjcpp`](http://wsjcpp.org), you can use the command `wsjcpp 
 If you are using [`CPM.cmake`](https://github.com/TheLartians/CPM.cmake), you can check this [`example`](https://github.com/TheLartians/CPM.cmake/tree/master/examples/json). After [adding CPM script](https://github.com/TheLartians/CPM.cmake#adding-cpm) to your project, implement the following snippet to your CMake:
 
 ```cmake
-CPMAddPackage(
-    NAME nlohmann_json
-    GITHUB_REPOSITORY nlohmann/json
-    VERSION 3.9.1)
+CPMAddPackage("gh:nlohmann/json@3.11.3")
 ```
+
+??? example
+
+    1. Download CPM.cmake
+
+    ```shell
+    mkdir -p cmake
+    wget -O cmake/CPM.cmake https://github.com/cpm-cmake/CPM.cmake/releases/latest/download/get_cpm.cmake
+    ```
+
+    2. Build
+
+    ```shell
+    cmake -S . -B build
+    cmake --build build
+    ```
