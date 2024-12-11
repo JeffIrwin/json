@@ -3273,10 +3273,10 @@ NLOHMANN_JSON_NAMESPACE_END
 
 
 #include <limits> // numeric_limits
+#include <string> // char_traits
+#include <tuple> // tuple
 #include <type_traits> // false_type, is_constructible, is_integral, is_same, true_type
 #include <utility> // declval
-#include <tuple> // tuple
-#include <string> // char_traits
 
 // #include <nlohmann/detail/iterators/iterator_traits.hpp>
 //     __ _____ _____ _____
@@ -3658,7 +3658,7 @@ struct char_traits<unsigned char> : std::char_traits<char>
 
     static constexpr int_type eof() noexcept
     {
-        return static_cast<int_type>(EOF);
+        return static_cast<int_type>(std::char_traits<char>::eof());
     }
 };
 
@@ -3682,7 +3682,7 @@ struct char_traits<signed char> : std::char_traits<char>
 
     static constexpr int_type eof() noexcept
     {
-        return static_cast<int_type>(EOF);
+        return static_cast<int_type>(std::char_traits<char>::eof());
     }
 };
 
@@ -4882,6 +4882,54 @@ auto from_json(const BasicJsonType& j, T (&arr)[N])  // NOLINT(cppcoreguidelines
     for (std::size_t i = 0; i < N; ++i)
     {
         arr[i] = j.at(i).template get<T>();
+    }
+}
+
+template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2>
+auto from_json(const BasicJsonType& j, T (&arr)[N1][N2])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+-> decltype(j.template get<T>(), void())
+{
+    for (std::size_t i1 = 0; i1 < N1; ++i1)
+    {
+        for (std::size_t i2 = 0; i2 < N2; ++i2)
+        {
+            arr[i1][i2] = j.at(i1).at(i2).template get<T>();
+        }
+    }
+}
+
+template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2, std::size_t N3>
+auto from_json(const BasicJsonType& j, T (&arr)[N1][N2][N3])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+-> decltype(j.template get<T>(), void())
+{
+    for (std::size_t i1 = 0; i1 < N1; ++i1)
+    {
+        for (std::size_t i2 = 0; i2 < N2; ++i2)
+        {
+            for (std::size_t i3 = 0; i3 < N3; ++i3)
+            {
+                arr[i1][i2][i3] = j.at(i1).at(i2).at(i3).template get<T>();
+            }
+        }
+    }
+}
+
+template<typename BasicJsonType, typename T, std::size_t N1, std::size_t N2, std::size_t N3, std::size_t N4>
+auto from_json(const BasicJsonType& j, T (&arr)[N1][N2][N3][N4])  // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+-> decltype(j.template get<T>(), void())
+{
+    for (std::size_t i1 = 0; i1 < N1; ++i1)
+    {
+        for (std::size_t i2 = 0; i2 < N2; ++i2)
+        {
+            for (std::size_t i3 = 0; i3 < N3; ++i3)
+            {
+                for (std::size_t i4 = 0; i4 < N4; ++i4)
+                {
+                    arr[i1][i2][i3][i4] = j.at(i1).at(i2).at(i3).at(i4).template get<T>();
+                }
+            }
+        }
     }
 }
 

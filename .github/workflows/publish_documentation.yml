@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 # we don't want to have concurrent jobs, and we don't want to cancel running jobs to avoid broken publications
 concurrency:
