@@ -665,10 +665,14 @@ CPMAddPackage("gh:nlohmann/json@3.11.3")
 
 ??? example
 
-    1. Create the following file:
+    1. Create the following files:
 
         ```cpp title="example.cpp"
-        --8<-- "integration/homebrew/example.cpp"
+        --8<-- "integration/cpm/example.cpp"
+        ```
+
+        ```cmake title="CMakeLists.txt"
+        --8<-- "integration/cpm/CMakeLists.txt"
         ```
 
     2. Download CPM.cmake
