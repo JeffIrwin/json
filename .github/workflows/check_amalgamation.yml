@@ -3,7 +3,8 @@ name: "Check amalgamation"
 on:
   pull_request:
 
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   save:
