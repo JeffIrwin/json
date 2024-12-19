@@ -1631,7 +1631,7 @@ TEST_CASE("CBOR")
                 };
 
                 json j;
-                auto cbp = nlohmann::detail::json_sax_dom_callback_parser<json>(j, callback, true);
+                auto cbp = nlohmann::detail::json_sax_dom_callback_parser<json, nlohmann::detail::string_input_adapter_type>(j, callback, true);
                 CHECK(json::sax_parse(input, &cbp, json::input_format_t::cbor));
                 CHECK(j.at("foo").is_binary());
                 CHECK(binary_seen);

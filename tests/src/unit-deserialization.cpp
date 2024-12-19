@@ -587,7 +587,7 @@ TEST_CASE("deserialization")
                 auto first = str.begin();
                 auto last = str.end();
                 json j;
-                json_sax_dom_parser<json> sax(j, true);
+                json_sax_dom_parser<json, nlohmann::detail::string_input_adapter_type> sax(j, true);
 
                 CHECK(json::sax_parse(proxy(first), proxy(last), &sax,
                                       input_format_t::json, false));

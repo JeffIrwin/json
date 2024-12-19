@@ -242,4 +242,24 @@ TEST_CASE("Regression tests for extended diagnostics")
             json const j_arr_copy = j_arr;
         }
     }
+
+    SECTION("Regression test for issue #3915 - JSON_DIAGNOSTICS trigger assertion")
+    {
+        json j = json::object();
+        j["root"] = "root_str";
+
+        json jj = json::object();
+        jj["child"] = json::object();
+
+        // If do not push anything in object, then no assert will be produced
+        jj["child"]["prop1"] = "prop1_value";
+
+        // Push all properties of child in parent
+        j.insert(jj.at("child").begin(), jj.at("child").end());
+
+        // Here assert is generated when construct new json
+        const json k(j);
+
+        CHECK(k.dump() == "{\"prop1\":\"prop1_value\",\"root\":\"root_str\"}");
+    }
 }
