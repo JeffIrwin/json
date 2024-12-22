@@ -129,7 +129,7 @@ class B : public A {
 - [NLOHMANN_DEFINE_TYPE_INTRUSIVE / NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_intrusive.md)
   for similar macros that can be defined _inside_ a non-derived type.
 - [NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE / NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE_WITH_DEFAULT](nlohmann_define_type_non_intrusive.md)
-  for a similar macros that can be defined _outside_ a non-derived type.
+  for similar macros that can be defined _outside_ a non-derived type.
 - [Arbitrary Type Conversions](../../features/arbitrary_types.md) for an overview.
 
 ## Version history
