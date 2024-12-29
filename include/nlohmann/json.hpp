@@ -849,8 +849,8 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
                    detail::is_basic_json<BasicJsonType>::value&& !std::is_same<basic_json, BasicJsonType>::value, int > = 0 >
     basic_json(const BasicJsonType& val)
 #if JSON_DIAGNOSTIC_POSITIONS
-        : start_position(val.start_position),
-          end_position(val.end_position)
+        : start_position(val.start_pos()),
+          end_position(val.end_pos())
 #endif
     {
         using other_boolean_t = typename BasicJsonType::boolean_t;
