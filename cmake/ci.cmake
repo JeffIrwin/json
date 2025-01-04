@@ -552,6 +552,20 @@ add_custom_target(ci_test_diagnostics
 )
 
 ###############################################################################
+# Enable diagnostic positions support.
+###############################################################################
+
+add_custom_target(ci_test_diagnostic_positions
+    COMMAND ${CMAKE_COMMAND}
+    -DCMAKE_BUILD_TYPE=Debug -GNinja
+    -DJSON_BuildTests=ON -DJSON_Diagnostic_Positions=ON
+    -S${PROJECT_SOURCE_DIR} -B${PROJECT_BINARY_DIR}/build_diagnostic_positions
+    COMMAND ${CMAKE_COMMAND} --build ${PROJECT_BINARY_DIR}/build_diagnostic_positions
+    COMMAND cd ${PROJECT_BINARY_DIR}/build_diagnostic_positions && ${CMAKE_CTEST_COMMAND} --parallel ${N} --output-on-failure
+    COMMENT "Compile and test with diagnostic positions enabled"
+)
+
+###############################################################################
 # Enable legacy discarded value comparison.
 ###############################################################################
 
@@ -910,7 +924,7 @@ endfunction()
 ci_get_cmake(3.1.0 CMAKE_3_1_0_BINARY)
 ci_get_cmake(3.13.0 CMAKE_3_13_0_BINARY)
 
-set(JSON_CMAKE_FLAGS_3_1_0 JSON_Diagnostics JSON_GlobalUDLs JSON_ImplicitConversions JSON_DisableEnumSerialization
+set(JSON_CMAKE_FLAGS_3_1_0 JSON_Diagnostics JSON_Diagnostic_Positions JSON_GlobalUDLs JSON_ImplicitConversions JSON_DisableEnumSerialization
     JSON_LegacyDiscardedValueComparison JSON_Install JSON_MultipleHeaders JSON_SystemInclude JSON_Valgrind)
 set(JSON_CMAKE_FLAGS_3_13_0 JSON_BuildTests)
 
