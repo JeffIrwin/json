@@ -359,4 +359,12 @@ TEST_CASE("alternative string type")
         alt_json const j2 = {"foo", "bam"};
         CHECK(alt_json::diff(j1, j2).dump() == "[{\"op\":\"replace\",\"path\":\"/1\",\"value\":\"bam\"},{\"op\":\"remove\",\"path\":\"/2\"}]");
     }
+
+    SECTION("flatten")
+    {
+        // a JSON value
+        const alt_json j = alt_json::parse(R"({"foo": ["bar", "baz"]})");
+        const auto j2 = j.flatten();
+        CHECK(j2.dump() == R"({"/foo/0":"bar","/foo/1":"baz"})");
+    }
 }
