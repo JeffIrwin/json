@@ -82,7 +82,12 @@ When the macro is not defined, the library will define it to its default value.
     --8<-- "examples/diagnostic_positions_exception.output"
     ```    
         The output shows the exception with start/end positions only.
-        
+
+## See also
+
+- [:simple-cmake: JSON_Diagnostics](../../integration/cmake.md#json_diagnostics) - CMake option to control the macro
+- [JSON_DIAGNOSTIC_POSITIONS](json_diagnostic_positions.md) - macro to access positions of elements
+
 ## Version history
 
 - Added in version 3.10.0.

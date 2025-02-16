@@ -24,10 +24,25 @@ When enabled, exception messages contain a [JSON Pointer](json_pointer.md) to th
 exception, see [Extended diagnostic messages](../home/exceptions.md#extended-diagnostic-messages) for an example. Note
 that enabling this macro increases the size of every JSON value by one pointer and adds some runtime overhead.
 
-The diagnostics messages can also be controlled with the CMake option `JSON_Diagnostics` (`OFF` by default) which sets
-`JSON_DIAGNOSTICS` accordingly.
+The diagnostics messages can also be controlled with the CMake option
+[`JSON_Diagnostics`](../integration/cmake.md#json_diagnostics) (`OFF` by default) which sets `JSON_DIAGNOSTICS`
+accordingly.
 
 See [full documentation of `JSON_DIAGNOSTICS`](../api/macros/json_diagnostics.md).
+
+## `JSON_DIAGNOSTIC_POSITIONS`
+
+When enabled, two new member functions [`start_pos()`](../api/basic_json/start_pos.md) and
+[`end_pos()`](../api/basic_json/end_pos.md) are added to [`basic_json`](../api/basic_json/index.md) values. If the value
+was created by calling the[`parse`](../api/basic_json/parse.md) function, then these functions allow to query the byte
+positions of the value in the input it was parsed from. The byte positions are also used in exceptions to help locate
+errors.
+
+The diagnostics positions can also be controlled with the CMake option
+[`JSON_Diagnostic_Positions`](../integration/cmake.md#json_diagnostic_positions) (`OFF` by default) which sets
+`JSON_DIAGNOSTIC_POSITIONS` accordingly.
+
+See [full documentation of `JSON_DIAGNOSTIC_POSITIONS`](../api/macros/json_diagnostic_positions.md)
 
 ## `JSON_HAS_CPP_11`, `JSON_HAS_CPP_14`, `JSON_HAS_CPP_17`, `JSON_HAS_CPP_20`
 

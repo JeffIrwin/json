@@ -138,3 +138,7 @@ result in undefined behavior. Since version 3.11.4, this library checks for `nul
     ```
     [json.exception.parse_error.101] parse error: attempting to parse an empty input; check that your input string or stream contains the expected JSON
     ```
+
+## See also
+
+- [JSON_ASSERT](../api/macros/json_assert.md) - control behavior of runtime assertions

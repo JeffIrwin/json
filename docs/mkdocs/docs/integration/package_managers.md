@@ -824,12 +824,3 @@ to your podfile (see [an example](https://bitbucket.org/benman/nlohmann_json-coc
 !!! warning
 
     The module is outdated as the respective [pod](https://cocoapods.org/pods/nlohmann_json) has not been updated in years.
-
-## wsjcpp
-
-If you are using [`wsjcpp`](http://wsjcpp.org), you can use the command `wsjcpp install "https://github.com/nlohmann/json:develop"`
-to get the latest version. Note you can change the branch `:develop` to an existing tag or another branch.
-
-!!! warning
-
-    The package manager is outdated as the respective [repository](https://github.com/wsjcpp/wsjcpp) has not been updated in years.

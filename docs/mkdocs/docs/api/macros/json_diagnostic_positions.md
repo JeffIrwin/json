@@ -108,6 +108,12 @@ When the macro is not defined, the library will define it to its default value.
     ```
     
         The output shows the exception with diagnostic path info and start/end positions.
+
+## See also
+
+- [:simple-cmake: JSON_Diagnostic_Positions](../../integration/cmake.md#json_diagnostic_positions) - CMake option to control the macro
+- [JSON_DIAGNOSTICS](json_diagnostics.md) - macro to control extended diagnostics
+
 ## Version history
 
 - Added in version 3.12.0.

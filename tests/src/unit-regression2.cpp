@@ -377,6 +377,19 @@ inline for_3333::for_3333(const json& j)
     : for_3333(j.value("x", 0), j.value("y", 0))
 {}
 
+/////////////////////////////////////////////////////////////////////
+// for #3810
+/////////////////////////////////////////////////////////////////////
+
+struct Example_3810
+{
+    int bla{};
+
+    Example_3810() = default;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(Example_3810, bla);
+
 TEST_CASE("regression tests 2")
 {
     SECTION("issue #1001 - Fix memory leak during parser callback")
@@ -1003,6 +1016,26 @@ TEST_CASE("regression tests 2")
 
         CHECK(p.x == 1);
         CHECK(p.y == 2);
+    }
+
+    SECTION("issue #3810 - ordered_json doesn't support construction from C array of custom type")
+    {
+        Example_3810 states[45]; // NOLINT(cppcoreguidelines-avoid-c-arrays,hicpp-avoid-c-arrays,modernize-avoid-c-arrays)
+
+        // fix "not used" warning
+        states[0].bla = 1;
+
+        const auto* const expected = R"([{"bla":1},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0},{"bla":0}])";
+
+        // This works:
+        nlohmann::json j;
+        j["test"] = states;
+        CHECK(j["test"].dump() == expected);
+
+        // This doesn't compile:
+        nlohmann::ordered_json oj;
+        oj["test"] = states;
+        CHECK(oj["test"].dump() == expected);
     }
 }
 
